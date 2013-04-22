@@ -37,6 +37,8 @@
 /**
  * ChangeLog:
  *
+** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+**               bugfix: config option Strikethrough
  * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  *               bugfix: encoding html code (security risk <todo><script>alert('hi')</script></todo>) - bug reported by Andreas
  *               bugfix: use correct <todo> tag if there are more than 1 in the same line.
@@ -267,7 +269,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 				if($this->getConf("AllowLinks") == true) {
 					$span = "<span class=\"todotext\">";
 				} else {
-					$span = "<span class=\"todotext todohlght\" onclick=\"clickSpan(jQuery(this), '" . addslashes($ID) . "')\">";
+					$span = "<span class=\"todotext todohlght\" onclick=\"clickSpan(jQuery(this), '" . addslashes($ID) . "', ".$Strikethrough.")\">";
 				}
 			} else {
 				$span = "<span class=\"todotext\">";
@@ -277,7 +279,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 			if(trim($match) != ""){
 				#Generate Beginning of Checkbox
 				// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
-				$begin = "<input type=\"checkbox\" class=\"todocheckbox\" data-index=\"".$handler->todo_index."\" onclick=\"todo(jQuery(this), '" . addslashes($ID) . "', $Strikethrough)\" $checked /> ";
+				$begin = "<input type=\"checkbox\" class=\"todocheckbox\" data-index=\"".$handler->todo_index."\" onclick=\"todo(jQuery(this), '" . addslashes($ID) . "', ".$Strikethrough.")\" ".$checked." /> ";
 				# a username was assigned to this task
 				if( $handler->todo_user ) {
 					$begin .= '<span class="todouser">['.htmlspecialchars($handler->todo_user).']</span>';
@@ -435,7 +437,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 									if($this->getConf("AllowLinks") == true) {
 										$span .= '<span class="todotext">';
 									} else {
-										$span .= '<span class="todotext todohlght" onclick="clickSpan(jQuery(this), \''.addslashes($page).'\')">';
+										$span .= '<span class="todotext todohlght" onclick="clickSpan(jQuery(this), \''.addslashes($page).'\', '.$Strikethrough.')">';
 									}
 								} else {
 									$span .= '<span class="todotext">';
