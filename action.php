@@ -5,6 +5,8 @@
  *
  * Original Example: http://www.dokuwiki.org/devel:action_plugins
  * @author     Babbage <babbage@digitalbrink.com>
+ * @date 20130405 Leo Eibler <dokuwiki@sprossenwanne.at> \n
+ *                replace old sack() method with new jQuery method and use post instead of get \n
  */
 
 if (!defined('DOKU_INC')) die();
@@ -20,7 +22,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 		return array (
 			'author' => 'Babbage',
 			'email' => 'babbage@digitalbrink.com',
-			'date' => '2010-02-27',
+			'date' => '2013-04-05',
 			'name' => 'ToDo Action Plugin',
 			'desc' => 'Inserts a ToDo button into the editor toolbar',
 			'url' => 'http://www.dokuwiki.org/plugin:todo',
@@ -46,6 +48,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 			'key'    => 't',
 			'open'   => '<todo>',
 			'close'  => '</todo>',
+			'block' => false,
 		);
 	}
 

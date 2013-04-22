@@ -14,6 +14,8 @@
 /**
  * ChangeLog:
  *
+ * [04/05/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ *               upgrade plugin to work with newest version of dokuwiki (tested version Release 2013-03-06 Weatherwax RC1).
  * [08/16/2010]: Fixed another bug where javascript would not decode the action
  *               text properly (replaced unescape with decodeURIComponent).  
  * [04/03/2010]: Fixed a bug where javascript would not decode the action text
@@ -73,7 +75,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         return array(
             'author' => 'Babbage',
             'email'  => 'babbage@digitalbrink.com',
-            'date'   => '2010-08-16',
+            'date'   => '2013-04-05',
             'name'   => 'ToDo',
             'desc'   => 'Create a checkbox based todo list',
             'url'    => 'http://www.dokuwiki.org/plugin:todo',
