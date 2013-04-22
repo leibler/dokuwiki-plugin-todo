@@ -7,6 +7,8 @@
  * @author     Babbage <babbage@digitalbrink.com>
  * @date 20130405 Leo Eibler <dokuwiki@sprossenwanne.at> \n
  *                replace old sack() method with new jQuery method and use post instead of get \n
+ * @date 20130408 Leo Eibler <dokuwiki@sprossenwanne.at> \n
+ *                remove getInfo() call because it's done by plugin.info.txt (since dokuwiki 2009-12-25 “Lemming”)
  */
 
 if (!defined('DOKU_INC')) die();
@@ -18,17 +20,10 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 	/**
 	 * Return some info
 	 */
+	 /*
 	function getInfo() {
-		return array (
-			'author' => 'Babbage',
-			'email' => 'babbage@digitalbrink.com',
-			'date' => '2013-04-05',
-			'name' => 'ToDo Action Plugin',
-			'desc' => 'Inserts a ToDo button into the editor toolbar',
-			'url' => 'http://www.dokuwiki.org/plugin:todo',
-			
-		);
-	}
+		// replaced by plugin.info.txt file
+	}*/
 
 	/**
 	 * Register the eventhandlers

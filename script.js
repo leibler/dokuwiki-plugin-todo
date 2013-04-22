@@ -1,6 +1,8 @@
 /*
 ** @date 20130405 Leo Eibler <dokuwiki@sprossenwanne.at> \n
 **                replace old sack() method with new jQuery method and use post instead of get - see https://www.dokuwiki.org/devel:jqueryfaq \n
+** @date 20130407 Leo Eibler <dokuwiki@sprossenwanne.at> \n
+**                use jQuery for finding the elements \n
 */
 function whenCompleted( data ){
 	//alert(data);
@@ -9,32 +11,28 @@ function whenCompleted( data ){
 function clickSpan(span, id){
 	//Find the checkbox node we need
 	var chk;
-	var preve = span.previousSibling;
-	while(preve){
-		if(preve.nodeType == 1) {
+	var preve = jQuery(span).prev();
+	while( preve ) {
+		if( preve.is("input") ) {
 			chk = preve;
 			break;
 		}
-		preve = preve.previousSibling;
+		preve = preve.prev();
 	}
-
-	if(chk && chk.nodeName == "INPUT") {
-		//Change the checkbox
-		chk.checked = !chk.checked;
-
-		//Do we require strikethrough
+	if( chk.is("input") ) {
+		chk.attr('checked', !chk.attr('checked'));
 		var strike;
-		if(chk.checked == true){
+		if( chk.attr('checked') ) {
 			strike = true;
-		}else{
+		} else {
 			strike = false;
 		}
-
-		//Call the todo function
-		todo(chk, id, strike);
+		todo( chk, id, strike );
+		//chk.checked = !chk.checked;
 	} else {
 		alert("Appropriate javascript element not found.");
 	}
+
 }
 
 function todo(chk, path, strike){
@@ -46,41 +44,25 @@ function todo(chk, path, strike){
 	** -Span
 	** --Anchor  
 	** ---Del
-	*/          
+	*/ 
 
-	var span;
-	var nexte = chk.nextSibling;
+	chk = jQuery(chk);
+	var inputTodohiddentext = chk.nextAll("span.todotext").children("input.todohiddentext").first();
+	var spanTodoinnertext = chk.nextAll("span.todotext").children("span.todoinnertext").first();
 
-	//Find the SPAN node we need...
-	while(nexte){
-		if(nexte.nodeType == 1) {
-			span = nexte;
-			break;
-		}
-		nexte = nexte.nextSibling;
-	}
-
-	//Verify we found the correct node
-	var _postVarChecked;
-	if(span && span.nodeName == "SPAN") {
-		if(chk.checked == true){
-			//alert("true");
-			if(strike == 1){
-				span.lastChild.innerHTML = "<del>" + decodeURIComponent(span.firstChild.value.replace(/\+/g, " ")) + "</del>";
-			}
+	if( spanTodoinnertext && inputTodohiddentext ) {
+		if( chk.attr('checked') ) {
 			_postVarChecked = "1";
+			spanTodoinnertext.html( "<del>"+decodeURIComponent( inputTodohiddentext.val().replace(/\+/g, " ") )+"</del>" );
 		} else {
-			//alert("false");
-			span.lastChild.innerHTML = decodeURIComponent(span.firstChild.value.replace(/\+/g, " "));
 			_postVarChecked = "0";
+			spanTodoinnertext.html( decodeURIComponent( inputTodohiddentext.val().replace(/\+/g, " ") ) );
+			
 		}
-
-		//alert(path);
-		// by Leo <dokuwiki@sprossenwanne.at> replace sack() with jQuery.post
 		jQuery.post(
 			DOKU_BASE+'lib/plugins/todo/ajax.php',
 			{ 
-				"origVal": span.firstChild.value, 
+				"origVal": inputTodohiddentext.val().replace(/\+/g, " "), 
 				"path": path,
 				"checked": _postVarChecked
 			},
@@ -88,6 +70,6 @@ function todo(chk, path, strike){
 		);
 	} else {
 		alert("Appropriate javascript element not found.\nReverting checkmark.");
-		chk.checked = !chk.checked;
 	}
+
 }

@@ -2,18 +2,48 @@
 /**
  * ToDo Plugin: Creates a checkbox based todo list
  *
- * Syntax: <todo [#]>Name of Action</todo> -
+ * Syntax: <todo [@username] [#]>Name of Action</todo> -
  *  Creates a Checkbox with the "Name of Action" as 
  *  the text associated with it. The hash (#, optional)
- *  will cause the checkbox to be checked by default.    
+ *  will cause the checkbox to be checked by default.
+ *  The @ sign followed by a username can be used to assign this todo to a user.
+ *  examples: 
+ *     A todo without user assignment
+ *       <todo>Something todo</todo>   
+ *     A completed todo without user assignment
+ *       <todo #>Completed todo</todo>   
+ *     A todo assigned to user User
+ *       <todo @leo>Something todo for Leo</todo>   
+ *     A completed todo assigned to user User
+ *       <todo @leo #>Todo completed for Leo</todo>   
  * 
+ * In combination with dokuwiki searchpattern plugin version (at least v20130408),
+ * it is a lightweight solution for a task management system based on dokuwiki.
+ * use this searchpattern expression for open todos: 
+ *     ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
+ * use this searchpattern expression for completed todos: 
+ *     ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
+ * do not forget the no-cache option
+ *     ~~NOCACHE~~
+ *
+ * Compatibility:
+ *     Release 2013-03-06 "Weatherwax RC1"
+ *     Release 2012-10-13 "Adora Belle"
+ *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * @author     Babbage <babbage@digitalbrink.com>
+ * @author     Babbage <babbage@digitalbrink.com>; Leo Eibler <dokuwiki@sprossenwanne.at>
  */
 
 /**
  * ChangeLog:
  *
+ * [04/08/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ *               add description / comments and syntax howto about integration with searchpattern
+ *               check compatibility with dokuwiki release 2012-10-13 "Adora Belle"
+ *               remove getInfo() call because it's done by plugin.info.txt (since dokuwiki 2009-12-25 "Lemming")
+ * [04/07/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ *               add handler method _searchpatternHandler() for dokuwiki searchpattern extension.
+ *               add user assignment for todos (with @username syntax in todo tag e.g. <todo @leo>do something</todo>)
  * [04/05/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  *               upgrade plugin to work with newest version of dokuwiki (tested version Release 2013-03-06 Weatherwax RC1).
  * [08/16/2010]: Fixed another bug where javascript would not decode the action
@@ -71,16 +101,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @public
     * @static
     */
+	/*
     function getInfo(){
-        return array(
-            'author' => 'Babbage',
-            'email'  => 'babbage@digitalbrink.com',
-            'date'   => '2013-04-05',
-            'name'   => 'ToDo',
-            'desc'   => 'Create a checkbox based todo list',
-            'url'    => 'http://www.dokuwiki.org/plugin:todo',
-        );
+		// replaced by plugin.info.txt file
     }
+	*/
  
    /**
     * Get the type of syntax this plugin defines.
@@ -187,10 +212,20 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         switch ($state) {
           case DOKU_LEXER_ENTER :
             #Search to see if the '#' is in the todo tag (if so, this means the Action has been completed)
-            if(substr( trim( substr($match, 5) ), 0, 1) == '#'){
-              #Hold on to the checked value by temporarily storing it in $handler
-              $handler->checked = true;
-            }
+			$x = preg_match( '%<todo([^>]*)>%i', $match, $pregmatches );
+			if( $x ) {
+				if( ($cPos = strpos( $pregmatches[1], '#' )) !== false ) {
+					// ok, # means this is checked
+					$handler->checked = true;
+				}
+				if( ($uPos = strpos( $pregmatches[1], '@' )) !== false ) {
+					$match2 = substr( $match, $uPos );
+					$x = preg_match( '%@([-.\w]+)%i', $match2, $pregmatches );
+					if( $x ) {
+						$handler->todo_user = $pregmatches[1];
+					}
+				}
+			}
             break;
           case DOKU_LEXER_MATCHED :
             break;
@@ -210,32 +245,36 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
             $checked = "";
             if($handler->checked){ $checked = "checked=\"checked\""; }
             
-            #Determine if we should apply strikethrough
-            if($this->getConf("Strikethrough") == true){
-              $Strikethrough = 1;
-            }else{
-              $Strikethrough = 0;
-            }
+			#Determine if we should apply strikethrough
+			if($this->getConf("Strikethrough") == true) {
+				$Strikethrough = 1;
+			} else {
+				$Strikethrough = 0;
+			}
             
             #If we are not displaying links, then the text should also check the checkbox
-            if($this->getConf("CheckboxText") == true){
-              if($this->getConf("AllowLinks") == true){
-                $span = "<span class=\"todotext\">";
-              }else{
-                $span = "<span class=\"todotext todohlght\" onClick=\"clickSpan(this, '" . addslashes($ID) . "')\">";
-              }
-            }else{
-              $span = "<span class=\"todotext\">";
-            }
+			if($this->getConf("CheckboxText") == true){
+				if($this->getConf("AllowLinks") == true) {
+					$span = "<span class=\"todotext\">";
+				} else {
+					$span = "<span class=\"todotext todohlght\" onClick=\"clickSpan(this, '" . addslashes($ID) . "')\">";
+				}
+			} else {
+				$span = "<span class=\"todotext\">";
+			}
             
             #Make sure there is actually an action to create
             if(trim($match) != ""){
               #Generate Beginning of Checkbox
-              $begin = "<input type=\"checkbox\" onclick=\"todo(this, '" . addslashes($ID) . "', $Strikethrough)\" $checked /> ";//addslashes($INFO["filepath"]) . "')\" /> <span>";
+              $begin = "<input type=\"checkbox\" onclick=\"todo(this, '" . addslashes($ID) . "', $Strikethrough)\" $checked /> ";
+				# a username was assigned to this task
+				if( $handler->todo_user ) {
+					$begin .= '<span class="todouser">['.$handler->todo_user.']</span>';
+				}
               $begin .= $span;
               
               #Generate Hidden Field to Hold Original Title of Action
-              $begin .= "<input type=\"hidden\" value=\"" . urlencode($match) . "\" />";
+              $begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
               
               #Generate Closing Tag
               $end = "</span>";
@@ -246,6 +285,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
             break;
           case DOKU_LEXER_EXIT :
             #Delete temporary checked variable
+            unset($handler->todo_user);
             unset($handler->checked);
             break;
           case DOKU_LEXER_SPECIAL :
@@ -290,9 +330,9 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
               }else{
                 #Should we allow Strikethrough or not
                 if($data[1][3] == true && $this->getConf("Strikethrough") == true){
-                  $text .= "<span><del>".$data[1][1]."</del></span>";
+                  $text .= '<span class="todoinnertext"><del>'.$data[1][1].'</del></span>';
                 }else{
-                  $text .= "<span>" . $data[1][1] . "</span>";
+                  $text .= '<span class="todoinnertext">'.$data[1][1].'</span>';
                 }      
               }
               $text .= $data[1][2];
@@ -304,6 +344,143 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         }
         return false;
     }
+	
+	/*
+	** @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
+	** use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
+	** use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
+	** this handler method uses the table and layout with css classes from searchpattern plugin
+	** @param $type	string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
+	**             	wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
+	**             	intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
+	**             	intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
+	**             	intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+	**             	intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+	**             	intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
+	** @param $renderer	object current rendering object (use $renderer->doc .= 'text' to output text)
+	** @param $data	array whole data multidemensional array( array( $page => $countOfMatches ), ... )
+	** @param $matches	array whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
+	** @param $page	string id of current page
+	** @param $params	array the parameters set by searchpattern (see search pattern documentation)
+	** @param $value	string value which should be outputted by searchpattern
+	** @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
+	*/
+	function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
+		if( $this->getConf("Strikethrough") == true ) {
+			$Strikethrough = 1;
+		} else {
+			$Strikethrough = 0;
+		}
+		if( $this->getConf("AllowLinks") == true ) {
+			$AllowLinks = 1;
+		} else {
+			$AllowLinks = 0;
+		}
+
+		$type = strtolower( $type );
+		switch( $type ) {
+			case 'wholeoutput':
+				// for open todos:
+				//   ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
+				// for completed todos:
+				//   ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
+				// so matches should hold an array with all <todo>matches</todo>
+				if( !is_array($matches) ) {
+					return false;
+				}
+				$renderer->doc .= '<div class="sp_main">';
+				$renderer->doc .= '<table class="inline sp_main_table">';	//create table
+				foreach( $matches as $page => $alltodos ) {
+					$renderer->doc .= '<tr class="sp_title"><th class="sp_title" colspan="2"><a href="'.wl($page).'">'.$page.'</a></td></tr>';
+					foreach( $alltodos as $k => $alltodos2 ) {
+						foreach( $alltodos2 as $matchtodo ) {
+							$x = preg_match( '%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $matchtodo, $pregmatches );
+							$checked = false;
+							$todo_user = false;
+							if( $x ) {
+								if( strpos( $pregmatches[1], '#' ) !== false ) {
+									// ok, # means this is checked
+									$checked = true;
+								}
+								if( ($uPos = strpos( $pregmatches[1], '@' )) !== false ) {
+									$match2 = substr( $pregmatches[1], $uPos );
+									$x = preg_match( '%@([-.\w]+)%i', $match2, $pregusermatch );
+									if( $x ) {
+										$todo_user = $pregusermatch[1];
+									}
+								}
+								$match = $pregmatches[2];
+								$pregmatches[2] = trim($pregmatches[2]);
+								if( empty($pregmatches[2]) ) {
+									continue;
+								}
+								$renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
+								if( !empty($todo_user) ) {
+									$span = '<span class="todouser">['.$todo_user.']</span>';
+								} else {
+									$span = '';
+								}
+								if($this->getConf("CheckboxText") == true){
+									if($this->getConf("AllowLinks") == true) {
+										$span .= '<span class="todotext">';
+									} else {
+										$span .= '<span class="todotext todohlght" onClick="clickSpan(this, \''.addslashes($page).'\')">';
+									}
+								} else {
+									$span .= '<span class="todotext">';
+								}
+								$begin = "<input type=\"checkbox\" onclick=\"todo(this, '" . addslashes($page) . "', ".$Strikethrough.")\" ".( $checked ? 'checked="checked" ': '' )." /> ";
+								$begin .= $span;
+              
+								#Generate Hidden Field to Hold Original Title of Action
+								$begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
+								$renderer->doc .= $begin;
+								if( $AllowLinks ) {
+									#Should we allow Strikethrough or not
+									if( $checked && $Strikethrough ){
+										$renderer->doc .= $this->_createLink( $renderer, $match, '<del>'.$match.'</del>' );
+									} else {
+										$renderer->doc .= $this->_createLink( $renderer, $match, $match );
+									}
+								} else {
+									#Should we allow Strikethrough or not
+									if( $checked && $Strikethrough ){
+										$renderer->doc .= '<span class="todoinnertext"><del>'.$match.'</del></span>';
+									} else {
+										$renderer->doc .= '<span class="todoinnertext">'.$match."</span>";
+									}      
+								}
+								$renderer->doc .= '</span> <br />';
+								$renderer->doc .= '</td></tr>';
+							}
+						}
+					}
+				}
+				$renderer->doc .= '</table>';	//end table
+				$renderer->doc .= '</div>';
+				// true means, that this handler method does the output (searchpattern plugin has nothing to do)
+				return true;
+				break;
+			case 'intable:whole':
+				break;
+			case 'intable:prefix':
+				//$renderer->doc .= '<b>Start on Page '.$page.'</b>';
+				break;
+			case 'intable:match':
+				//$renderer->doc .= 'regex match on page '.$page.': <pre>'.$value.'</pre>';
+				break;
+			case 'intable:count':
+				//$renderer->doc .= 'normal count on page '.$page.': <pre>'.$value.'</pre>';
+				break;
+			case 'intable:suffix':
+				//$renderer->doc .= '<b>End on Page '.$page.'</b>';
+				break;
+			default:
+				break;
+		}
+		// false means, that this handler method does not output anything. all should be done by searchpattern plugin
+		return false;
+	}
     
     /**
      * Generate links from our Actions if necessary.

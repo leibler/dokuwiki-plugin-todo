@@ -1,7 +1,16 @@
 <?php
 /*
+** @brief This file is called by ajax if the user clicks on the todo checkbox or the todo text.
+** It sets the todo state to completed or reset it to open.
+** POST Parameters:
+**   origVal	string the original todo text to find the corresponding todo in the file
+**   checked	int should the todo set to completed (1) or to open (0)
+**   path	string id/path/name of the page
+**
 ** @date 20130405 Leo Eibler <dokuwiki@sprossenwanne.at> \n
 **                replace old sack() method with new jQuery method and use post instead of get \n
+** @date 20130407 Leo Eibler <dokuwiki@sprossenwanne.at> \n
+**                add user assignment for todos \n
 */
 
 if(!defined('DOKU_INC')) define('DOKU_INC',realpath(dirname(__FILE__).'/../../../').'/');
@@ -39,9 +48,6 @@ $ID = $path;
 $INFO = pageinfo();
 $fileName = $INFO["filepath"];
 
-//echo "ID='".$ID."' fileName='".$fileName."'";
-
-
 #Determine Permissions
 $permission = auth_quickaclcheck($ID);
 
@@ -59,11 +65,27 @@ if($permission >= AUTH_EDIT) {
 	while($valuePos !== FALSE && $todoPos !== FALSE) {
 		#Validation - Check to make sure the tag before this text is not a </todo> (it should be <todo...)
 		if(strrpos(substr($newContents, 0, $valuePos), "</todo>") < $todoPos){
-			if($checked == 1) {
-				$newContents = substr_replace($newContents, "<todo #>", $todoPos, ($valuePos - $todoPos));
-			} else {
-				$newContents = substr_replace($newContents, "<todo>", $todoPos, ($valuePos - $todoPos));
+			$todoTag = substr( $newContents, $todoPos, $valuePos-$todoPos );
+			// this should be the tag <todo .....>
+				//file_put_contents( realpath(dirname(__FILE__)).'/debug.txt', "user='".$todo_user."'!\n", FILE_APPEND );
+			$x = preg_match( '%<todo([^>]*)>%i', $todoTag, $pregmatches );
+			$todo_user = '';
+			$newTag = '<todo';
+			if( $x ) {
+				if( ($uPos = strpos( $pregmatches[1], '@' )) !== false ) {
+					$match2 = substr( $todoTag, $uPos );
+					$x = preg_match( '%@([-.\w]+)%i', $match2, $pregmatches );
+					if( $x ) {
+						$todo_user = $pregmatches[1];
+						$newTag .= ' @'.$todo_user;
+					}
+				}
 			}
+			if($checked == 1) {
+				$newTag .= ' #';
+			}
+			$newTag .= '>';
+			$newContents = substr_replace($newContents, $newTag, $todoPos, ($valuePos - $todoPos));
 			$contentChanged = true;    
 		}
 
