@@ -1,7 +1,8 @@
 base   todo
 author Babbage; Leo Eibler
 email  babbage@digitalbrink.com; dokuwiki@sprossenwanne.at
-date   2013-04-08
+date   2013-04-11
 name   ToDo
-desc   Create a checkbox based todo list with optional user assignment (by using <todo>This is a ToDo</todo>). In combination with dokuwiki searchpattern plugin (at least v20130408) it is a lightweight task list management system.
+desc   Create a checkbox based todo list with optional user assignment (by using <todo>This is a ToDo</todo>). In combination with dokuwiki searchpattern plugin (at least v20130411) it is a lightweight task list management system. Set a todo to complete by using \# sign: <todo \#>Completed Task</todo>. Assign a todo to a user leo with @leo: <todo @leo>Task for Leo</todo>. Use following searchpattern regular expressions to manage all todos on a single page. Use this for open todos: ~~SEARCHPATTERN\#'/<todo[^\#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~ Use this for completed todos: ~~SEARCHPATTERN\#'/<todo[^\#>]*\#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~ Use this for a list of all assigned todos: ~~SEARCHPATTERN\#'/<todo[^@>]*@([^\W]+)[^\#>]*(\#)?[^>]*>(.*?)<\/todo[\W]*?>/'?? $2,1,3 ??~~
 url    https://www.dokuwiki.org/plugin:todo
+

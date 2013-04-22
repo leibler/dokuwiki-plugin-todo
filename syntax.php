@@ -20,9 +20,9 @@
  * In combination with dokuwiki searchpattern plugin version (at least v20130408),
  * it is a lightweight solution for a task management system based on dokuwiki.
  * use this searchpattern expression for open todos: 
- *     ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
+ *     ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
  * use this searchpattern expression for completed todos: 
- *     ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
+ *     ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
  * do not forget the no-cache option
  *     ~~NOCACHE~~
  *
@@ -37,6 +37,13 @@
 /**
  * ChangeLog:
  *
+ * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ *               bugfix: encoding html code (security risk <todo><script>alert('hi')</script></todo>) - bug reported by Andreas
+ *               bugfix: use correct <todo> tag if there are more than 1 in the same line.
+ * [04/08/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ *               migrate changes made by Christian Marg to current version of plugin
+ * [04/08/2013]: by Christian Marg <marg@rz.tu-clausthal.de>
+ *               changed behaviour - when multiple todo-items have the same text, only the clicked one is checked.
  * [04/08/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  *               add description / comments and syntax howto about integration with searchpattern
  *               check compatibility with dokuwiki release 2012-10-13 "Adora Belle"
@@ -226,6 +233,9 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 					}
 				}
 			}
+			if( !is_numeric($handler->todo_index) ) {
+				$handler->todo_index = 0;
+			}
             break;
           case DOKU_LEXER_MATCHED :
             break;
@@ -257,36 +267,39 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 				if($this->getConf("AllowLinks") == true) {
 					$span = "<span class=\"todotext\">";
 				} else {
-					$span = "<span class=\"todotext todohlght\" onClick=\"clickSpan(this, '" . addslashes($ID) . "')\">";
+					$span = "<span class=\"todotext todohlght\" onclick=\"clickSpan(jQuery(this), '" . addslashes($ID) . "')\">";
 				}
 			} else {
 				$span = "<span class=\"todotext\">";
 			}
             
             #Make sure there is actually an action to create
-            if(trim($match) != ""){
-              #Generate Beginning of Checkbox
-              $begin = "<input type=\"checkbox\" onclick=\"todo(this, '" . addslashes($ID) . "', $Strikethrough)\" $checked /> ";
+			if(trim($match) != ""){
+				#Generate Beginning of Checkbox
+				// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
+				$begin = "<input type=\"checkbox\" class=\"todocheckbox\" data-index=\"".$handler->todo_index."\" onclick=\"todo(jQuery(this), '" . addslashes($ID) . "', $Strikethrough)\" $checked /> ";
 				# a username was assigned to this task
 				if( $handler->todo_user ) {
-					$begin .= '<span class="todouser">['.$handler->todo_user.']</span>';
+					$begin .= '<span class="todouser">['.htmlspecialchars($handler->todo_user).']</span>';
 				}
-              $begin .= $span;
-              
-              #Generate Hidden Field to Hold Original Title of Action
-              $begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
-              
-              #Generate Closing Tag
-              $end = "</span>";
-              
-              #Return the information for renderer
-              return array($state, array($begin, $match, $end, $handler->checked));
-            }
-            break;
+				$begin .= $span;
+
+				#Generate Hidden Field to Hold Original Title of Action
+				$begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
+
+				#Generate Closing Tag
+				$end = "</span>";
+
+				$handler->todo_index++;
+				#Return the information for renderer
+				return array($state, array($begin, $match, $end, $handler->checked));
+			}
+			break;
           case DOKU_LEXER_EXIT :
             #Delete temporary checked variable
             unset($handler->todo_user);
             unset($handler->checked);
+			//unset($handler->todo_index);
             break;
           case DOKU_LEXER_SPECIAL :
             break;
@@ -330,9 +343,9 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
               }else{
                 #Should we allow Strikethrough or not
                 if($data[1][3] == true && $this->getConf("Strikethrough") == true){
-                  $text .= '<span class="todoinnertext"><del>'.$data[1][1].'</del></span>';
+                  $text .= '<span class="todoinnertext"><del>'.htmlspecialchars($data[1][1]).'</del></span>';
                 }else{
-                  $text .= '<span class="todoinnertext">'.$data[1][1].'</span>';
+                  $text .= '<span class="todoinnertext">'.htmlspecialchars($data[1][1]).'</span>';
                 }      
               }
               $text .= $data[1][2];
@@ -347,8 +360,8 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 	
 	/*
 	** @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
-	** use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
-	** use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
+	** use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+	** use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
 	** this handler method uses the table and layout with css classes from searchpattern plugin
 	** @param $type	string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
 	**             	wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
@@ -380,20 +393,18 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 		$type = strtolower( $type );
 		switch( $type ) {
 			case 'wholeoutput':
-				// for open todos:
-				//   ~~SEARCHPATTERN#'/<todo[^#>]*>.*<\/todo[\W]*>/'?? _ToDo ??~~ 
-				// for completed todos:
-				//   ~~SEARCHPATTERN#'/<todo.*#.*>.*<\/todo[\W]*>/'?? _ToDo ??~~
-				// so matches should hold an array with all <todo>matches</todo>
+				// matches should hold an array with all <todo>matches</todo> or <todo #>matches</todo>
 				if( !is_array($matches) ) {
 					return false;
 				}
+				//file_put_contents( dirname(__FILE__).'/debug.txt', print_r($matches,true), FILE_APPEND );
+				//file_put_contents( dirname(__FILE__).'/debug.txt', print_r($params,true), FILE_APPEND );
 				$renderer->doc .= '<div class="sp_main">';
 				$renderer->doc .= '<table class="inline sp_main_table">';	//create table
 				foreach( $matches as $page => $alltodos ) {
 					$renderer->doc .= '<tr class="sp_title"><th class="sp_title" colspan="2"><a href="'.wl($page).'">'.$page.'</a></td></tr>';
 					foreach( $alltodos as $k => $alltodos2 ) {
-						foreach( $alltodos2 as $matchtodo ) {
+						foreach( $alltodos2 as $index => $matchtodo ) {
 							$x = preg_match( '%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $matchtodo, $pregmatches );
 							$checked = false;
 							$todo_user = false;
@@ -416,7 +427,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 								}
 								$renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
 								if( !empty($todo_user) ) {
-									$span = '<span class="todouser">['.$todo_user.']</span>';
+									$span = '<span class="todouser">['.htmlspecialchars($todo_user).']</span>';
 								} else {
 									$span = '';
 								}
@@ -424,12 +435,19 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 									if($this->getConf("AllowLinks") == true) {
 										$span .= '<span class="todotext">';
 									} else {
-										$span .= '<span class="todotext todohlght" onClick="clickSpan(this, \''.addslashes($page).'\')">';
+										$span .= '<span class="todotext todohlght" onclick="clickSpan(jQuery(this), \''.addslashes($page).'\')">';
 									}
 								} else {
 									$span .= '<span class="todotext">';
 								}
-								$begin = "<input type=\"checkbox\" onclick=\"todo(this, '" . addslashes($page) . "', ".$Strikethrough.")\" ".( $checked ? 'checked="checked" ': '' )." /> ";
+								// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
+								// leo: but in case of integration with searchpattern there is no chance to find the element with the index
+								// because after setting one element to completed the next call will have other index counts in the backend 
+								// (1st call changed the backend file, in the frontend it's already loaded)
+								// Possible solution:
+								//   maybe we only should count the not checked checkboxes so this should be the same
+								//   database like the backend file
+								$begin = "<input type=\"checkbox\" class=\"todocheckbox\" onclick=\"todo(jQuery(this), '" . addslashes($page) . "', ".$Strikethrough.")\" ".( $checked ? 'checked="checked" ': '' )." /> ";
 								$begin .= $span;
               
 								#Generate Hidden Field to Hold Original Title of Action
@@ -445,9 +463,9 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 								} else {
 									#Should we allow Strikethrough or not
 									if( $checked && $Strikethrough ){
-										$renderer->doc .= '<span class="todoinnertext"><del>'.$match.'</del></span>';
+										$renderer->doc .= '<span class="todoinnertext"><del>'.htmlspecialchars($match).'</del></span>';
 									} else {
-										$renderer->doc .= '<span class="todoinnertext">'.$match."</span>";
+										$renderer->doc .= '<span class="todoinnertext">'.htmlspecialchars($match)."</span>";
 									}      
 								}
 								$renderer->doc .= '</span> <br />';
