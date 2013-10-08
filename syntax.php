@@ -81,40 +81,12 @@
  */  
 
 if(!defined('DOKU_INC')) define('DOKU_INC',realpath(dirname(__FILE__).'/../../').'/');
-if(!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
-require_once(DOKU_PLUGIN.'syntax.php');
- 
+
 /**
  * All DokuWiki plugins to extend the parser/rendering mechanism
  * need to inherit from this class
  */
 class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
- 
-   /**
-    * Get an associative array with plugin info.
-    *
-    * <p>
-    * The returned array holds the following fields:
-    * <dl>
-    * <dt>author</dt><dd>Author of the plugin</dd>
-    * <dt>email</dt><dd>Email address to contact the author</dd>
-    * <dt>date</dt><dd>Last modified date of the plugin in
-    * <tt>YYYY-MM-DD</tt> format</dd>
-    * <dt>name</dt><dd>Name of the plugin</dd>
-    * <dt>desc</dt><dd>Short description of the plugin (Text only)</dd>
-    * <dt>url</dt><dd>Website with more information on the plugin
-    * (eg. syntax description)</dd>
-    * </dl>
-    * @param none
-    * @return Array Information about this plugin class.
-    * @public
-    * @static
-    */
-	/*
-    function getInfo(){
-		// replaced by plugin.info.txt file
-    }
-	*/
  
    /**
     * Get the type of syntax this plugin defines.
@@ -168,13 +140,13 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     function getSort(){
         return 999;
     }
- 
- 
+
+
    /**
     * Connect lookup pattern to lexer.
     *
-    * @param $aMode String The desired rendermode.
-    * @return none
+    * @param $mode String The desired rendermode.
+    * @return void
     * @public
     * @see render()
     */
@@ -207,11 +179,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * <dd>ordinary text encountered within the plugin's syntax mode
     * which doesn't match any pattern.</dd>
     * </dl>
-    * @param $aMatch String The text matched by the patterns.
-    * @param $aState Integer The lexer state for the match.
-    * @param $aPos Integer The character position of the matched text.
-    * @param $aHandler Object Reference to the Doku_Handler object.
-    * @return Integer The current lexer state for the match.
+    * @param $match    string  The text matched by the patterns.
+    * @param $state    int     The lexer state for the match.
+    * @param $pos      int     The character position of the matched text.
+    * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
+    * @return int The current lexer state for the match.
     * @public
     * @see render()
     * @static
@@ -319,11 +291,12 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * handling the rendering. The contents of <tt>$aData</tt> is the
     * return value of the <tt>handle()</tt> method.
     * </p>
-    * @param $aFormat String The output format to generate.
-    * @param $aRenderer Object A reference to the renderer object.
-    * @param $aData Array The data created by the <tt>handle()</tt>
+    * @param  $mode     String              The output format to generate.
+    * @param &$renderer Doku_Renderer_xhtml A reference to the renderer object.
+    * @param  $data     Array               The data created by the <tt>handle()</tt>
     * method.
-    * @return Boolean <tt>TRUE</tt> if rendered successfully, or
+    * @return Boolean
+    * <tt>TRUE</tt> if rendered successfully, or
     * <tt>FALSE</tt> otherwise.
     * @public
     * @see handle()
@@ -360,26 +333,26 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         return false;
     }
 	
-	/*
-	** @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
-	** use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-	** use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-	** this handler method uses the table and layout with css classes from searchpattern plugin
-	** @param $type	string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
-	**             	wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
-	**             	intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
-	**             	intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
-	**             	intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-	**             	intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-	**             	intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
-	** @param $renderer	object current rendering object (use $renderer->doc .= 'text' to output text)
-	** @param $data	array whole data multidemensional array( array( $page => $countOfMatches ), ... )
-	** @param $matches	array whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
-	** @param $page	string id of current page
-	** @param $params	array the parameters set by searchpattern (see search pattern documentation)
-	** @param $value	string value which should be outputted by searchpattern
-	** @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
-	*/
+	/**
+     * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
+     * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * this handler method uses the table and layout with css classes from searchpattern plugin
+     * @param $type    string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
+     *                wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
+     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
+     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
+     *                intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+     *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
+     * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
+     * @param array                $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
+     * @param array                $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
+     * @param string               $page     id of current page
+     * @param array                $params   the parameters set by searchpattern (see search pattern documentation)
+     * @param string               $value    value which should be outputted by searchpattern
+     * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
+     */
 	function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
 		if( $this->getConf("Strikethrough") == true ) {
 			$Strikethrough = 1;
@@ -504,9 +477,14 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     
     /**
      * Generate links from our Actions if necessary.
+     *
+     * @param Doku_Renderer_xhtml  &$renderer
+     * @param string                $url
+     * @param string                $name
+     * @return string
      */         
     function _createLink(&$renderer, $url, $name = NULL){
-      global $ID;
+      global $ID, $conf;
       
       #Determine URL
       $fullURL = "doku.php?id=";
@@ -522,7 +500,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
       
       #Resolve what the fullURL should be to the file (fix any relative pages [".:"] $actionNamespace might have)
       $pageName = $actionNamespace . $url;
-      $pageExists;
+      $pageExists = false;
       resolve_pageid(getNS($ID), $pageName, $pageExists);      
       $fullURL .= $pageName;
            
@@ -549,4 +527,3 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 }
  
 //Setup VIM: ex: et ts=4 enc=utf-8 :
-?>
