@@ -65,43 +65,47 @@ function todo( $chk, path, strike ){
     //console.log( "got $chk with data-id='"+$chk.attr("data-index")+"' $chk.is(':checked')='"+$chk.is(':checked')+"'" );
 	var $inputTodohiddentext = $chk.nextAll("span.todotext").children("input.todohiddentext").first(),
 	    $spanTodoinnertext = $chk.nextAll("span.todotext").children("span.todoinnertext").first(),
-	    _postVarIndex,
-        _postVarChecked;
+	    index = $chk.data('index'),
+        checked,
+        date = $chk.data('date');
 
-	if( $chk.data('index') !== undefined ) {
-		// if the data-index attribute is set, this is a call from the page where the todos are defined
-		_postVarIndex = $chk.data('index');
-	} else {
-		// if the data-index attribute is not set, this is a call from searchpattern dokuwiki plugin rendered page
-		_postVarIndex = -1;
-	}
+    // if the data-index attribute is set, this is a call from the page where the todos are defined
+    // otherwise this is a call from searchpattern dokuwiki plugin rendered page
+    if(index === undefined) index = -1;
+
 	if( $spanTodoinnertext && $inputTodohiddentext ) {
 		//if( $chk.attr('checked') ) {
 		// @date 20130413 Christian bugfix $chk.attr('checked') returns checkbox state from html - use $chk.is(':checked') - see http://www.unforastero.de/jquery/checkbox-angehakt.php
 		if( $chk.is(':checked') ) {
-			_postVarChecked = "1";
+			checked = "1";
 			if( strike ) {
 				$spanTodoinnertext.html( "<del>"+decodeURIComponent( $inputTodohiddentext.val().replace(/\+/g, " ") ).replace(/</g, "&lt;").replace(/>/g, "&gt;")+"</del>" );
 			}
 		} else {
-			_postVarChecked = "0";
+			checked = "0";
 			$spanTodoinnertext.html( decodeURIComponent( $inputTodohiddentext.val().replace(/\+/g, " ") ).replace(/</g, "&lt;").replace(/>/g, "&gt;") );
 		}
 
         var whenCompleted = function( data ){
-            //alert(data);
+            //update date after edit and show alert when needed
+            if(data.date)
+                jQuery('input.todocheckbox').data('date', data.date);
+            if(data.message)
+                alert(data.message);
         };
 
 		jQuery.post(
 			DOKU_BASE + 'lib/exe/ajax.php',
 			{
                 call: 'plugin_todo',
-				index: _postVarIndex,
+				index: index,
 				path: path,
-				checked: _postVarChecked,
-				origVal: $inputTodohiddentext.val().replace(/\+/g, " ")
+				checked: checked,
+				origVal: $inputTodohiddentext.val().replace(/\+/g, " "),
+                date: date
 			},
-			whenCompleted
+			whenCompleted,
+            'json'
 		);
 	} else {
 		alert("Appropriate javascript element not found.\nReverting checkmark.");

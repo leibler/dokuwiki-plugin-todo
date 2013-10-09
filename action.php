@@ -51,6 +51,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      *   checked    int should the to-do set to completed (1) or to open (0)
      *   path    string id/path/name of the page
      *
+     * @date 20131008 Gerrit Uitslag <klapinklapin@gmail.com> \n
+     *                move ajax.php to action.php, added lock and conflict checks and improved saving
      * @date 20130405 Leo Eibler <dokuwiki@sprossenwanne.at> \n
      *                replace old sack() method with new jQuery method and use post instead of get \n
      * @date 20130407 Leo Eibler <dokuwiki@sprossenwanne.at> \n
@@ -66,7 +68,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @param mixed $param not defined
      */
     public function _ajax_call(&$event, $param) {
-        global $ID;
+        global $ID, $DATE;
 
         if($event->data !== 'plugin_todo') {
             return;
@@ -80,7 +82,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
         if(isset($_REQUEST['index'], $_REQUEST['checked'], $_REQUEST['path'])) {
             // index = position of occurrence of <input> element (starting with 0 for first element)
-            $index = urldecode($_REQUEST['index']);
+            $index = (int) $_REQUEST['index'];
             // checked = flag if input is checked means to do is complete (1) or not (0)
             $checked = urldecode($_REQUEST['checked']);
             // path = page ID (name)
@@ -88,72 +90,83 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         } else {
             return;
         }
+        // origVal = urlencoded original value (in the case this is called by dokuwiki searchpattern plugin rendered page)
         $origVal = '';
-        if(isset($_REQUEST['origVal'])) {
-            // origVal = urlencoded original value (in the case this is called by dokuwiki searchpattern plugin rendered page)
-            $origVal = urldecode($_REQUEST['origVal']);
-        }
+        if(isset($_REQUEST['origVal'])) $origVal = urldecode($_REQUEST['origVal']);
 
-        $INFO = pageinfo(); //FIXME is this same as global $INFO;?
-        $fileName = $INFO['filepath'];
+        $date = 0;
+        if(isset($_REQUEST['date'])) $date = (int) $_REQUEST['date'];
+
+        $INFO = pageinfo();
 
         #Determine Permissions
         if(auth_quickaclcheck($ID) < AUTH_EDIT) {
             echo "You do not have permission to edit this file.\nAccess was denied.";
             return;
         }
+        // Check, if page is locked
+        if(checklock($ID)) {
+            $this->printJson(array('message' => 'The page is currently locked.'));
+        }
 
-        #Retrieve File Contents
-        $newContents = file_get_contents($fileName);
+        //conflict check
+        if($date != 0 && $INFO['meta']['date']['modified'] > $date) {
+            $this->printJson(array('message' => 'A newer version of this page is available, refresh your page before trying again.'));
+            return;
+        }
 
+        #Retrieve Page Contents
+        $wikitext = rawWiki($ID);
+
+        #Determine position of tag
         $contentChanged = false;
-        #Modify Contents
 
         if($index >= 0) {
             $index++;
-            // no origVal so we count all todos with the method from Christian Marg
-            // this will happen if we are on the current page with the todos
-            $todoPos = strnpos($newContents, '<todo', $index);
-            $todoTextPost = strpos($newContents, '>', $todoPos) + 1;
-            if($todoTextPost > $todoPos) {
-                $todoTag = substr($newContents, $todoPos, $todoTextPost - $todoPos);
-                $newTag = $this->_todoProcessTag($todoTag, $checked);
-                $newContents = substr_replace($newContents, $newTag, $todoPos, ($todoTextPost - $todoPos));
+            // index is only set on the current page with the todos
+            // the occurances are counted, untill the index-th input is reached which is updated
+            $todoTagStartPos = strnpos($wikitext, '<todo', $index);
+            $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
+            if($todoTagEndPos > $todoTagStartPos) {
                 $contentChanged = true;
             }
         } else {
             // this will happen if we are on a dokuwiki searchpattern plugin summary page
-            if($checked) {
-                $pattern = '/(<todo[^#>]*>(' . $this->_todoStr2regex($origVal) . '<\/todo[\W]*?>))/';
-            } else {
-                $pattern = '/(<todo[^#>]*#[^>]*>(' . $this->_todoStr2regex($origVal) . '<\/todo[\W]*?>))/';
-            }
-            $x = preg_match_all($pattern, $newContents, $spMatches, PREG_OFFSET_CAPTURE);
+            $checkedpattern = $checked ? '' : '*#[^>]';
+            $pattern = '/(<todo[^#>]' . $checkedpattern . '*>(' . preg_quote($origVal) . '<\/todo[\W]*?>))/';
+
+            $x = preg_match_all($pattern, $wikitext, $spMatches, PREG_OFFSET_CAPTURE);
             if($x && isset($spMatches[0][0])) {
                 // yes, we found matches and index is in a valid range
-                $todoPos = $spMatches[1][0][1];
-                $todoTextPost = $spMatches[2][0][1];
-                $todoTag = substr($newContents, $todoPos, $todoTextPost - $todoPos);
-                $newTag = $this->_todoProcessTag($todoTag, $checked);
-                $newContents = substr_replace($newContents, $newTag, $todoPos, ($todoTextPost - $todoPos));
+                $todoTagStartPos = $spMatches[1][0][1];
+                $todoTagEndPos = $spMatches[2][0][1];
+
                 $contentChanged = true;
             }
         }
 
+        // Modify content
         if($contentChanged) {
-            #Save Update (Minor)
-            io_writeWikiPage($fileName, $newContents, $ID, '');
-            addLogEntry(saveOldRevision($ID), $ID, DOKU_CHANGE_TYPE_MINOR_EDIT, "Checkbox Change", '');
+            // update text
+            $oldTag = substr($wikitext, $todoTagStartPos, $todoTagEndPos - $todoTagStartPos);
+            $newTag = $this->_buildTodoTag($oldTag, $checked);
+            $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
+
+            // save Update (Minor)
+            lock($ID);
+            saveWikiText($ID, $wikitext, 'Checkbox Change', $minoredit = true);
+            unlock($ID);
+
+            $return = array('date' => @filemtime(wikiFN($ID)));
+            $this->printJson($return);
         }
 
     }
 
-#(Possible) Alternative Method
-//Retrieve mtime from file
-//Load Data
-//Modify Data
-//Save Data
-//Replace new mtime with previous one
+    private function printJson($return) {
+        $json = new JSON();
+        echo $json->encode($return);
+    }
 
     /**
      * @brief gets current to-do tag and returns a new one depending on checked
@@ -161,16 +174,15 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @param $checked    int check flag (todo completed=1, todo uncompleted=0)
      * @return string new to-do completed or uncompleted tag e.g. <todo @user #>
      */
-    private function _todoProcessTag($todoTag, $checked) {
-        $x = preg_match('%<todo([^>]*)>%i', $todoTag, $pregmatches);
+    private function _buildTodoTag($todoTag, $checked) {
+        $x = preg_match('%<todo([^>]*)>%i', $todoTag, $matches);
         $newTag = '<todo';
         if($x) {
-            if(($uPos = strpos($pregmatches[1], '@')) !== false) {
-                $match2 = substr($todoTag, $uPos);
-                $x = preg_match('%@([-.\w]+)%i', $match2, $pregmatches);
+            if(($userPos = strpos($matches[1], '@')) !== false) {
+                $submatch = substr($todoTag, $userPos);
+                $x = preg_match('%@([-.\w]+)%i', $submatch, $matchinguser);
                 if($x) {
-                    $todo_user = $pregmatches[1];
-                    $newTag .= ' @' . $todo_user;
+                    $newTag .= ' @' . $matchinguser[1];
                 }
             }
         }
@@ -197,7 +209,6 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
     }
 
 }
-
 
 if(!function_exists('strnpos')) {
     /**

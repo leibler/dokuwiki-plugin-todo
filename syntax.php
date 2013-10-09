@@ -251,7 +251,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 			if(trim($match) != ""){
 				#Generate Beginning of Checkbox
 				// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
-				$begin = "<input type=\"checkbox\" class=\"todocheckbox\" data-index=\"".$handler->todo_index."\" onclick=\"todo(jQuery(this), '" . addslashes($ID) . "', ".$Strikethrough.")\" ".$checked." /> ";
+				$begin = '<input type="checkbox" class="todocheckbox" data-index="'.$handler->todo_index.'" data-date="'.hsc(@filemtime(wikiFN($ID))).'" onclick="todo(jQuery(this), \'' . addslashes($ID) . '\', '.$Strikethrough.')" '.$checked.' /> ';
 				# a username was assigned to this task
 				if( $handler->todo_user ) {
 					$begin .= '<span class="todouser">['.htmlspecialchars($handler->todo_user).']</span>';
