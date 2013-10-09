@@ -15,7 +15,10 @@
  *                bugfix: config option Strikethrough \n
  */
 
-
+/**
+ * lock to prevent simultanous requests
+ */
+var todoplugin_locked = {clickspan: false, todo: false};
 /**
  * @brief onclick method for span element
  * @param {jQuery} $span  the jQuery span element
@@ -23,6 +26,12 @@
  * @param {int}    strike strikethrough activated (1) or not (0) - see config option Strikethrough
  */
 function clickSpan($span, id, strike) {
+    //skip when locked
+    if (todoplugin_locked.clickspan || todoplugin_locked.todo) {
+        return;
+    }
+    todoplugin_locked.clickspan = true;
+
     //Find the checkbox node we need
     var $chk;
     //var $preve = jQuery(span).prev();
@@ -51,47 +60,51 @@ function clickSpan($span, id, strike) {
  * @param {int}    strike  strikethrough activated (1) or not (0) - see config option Strikethrough
  */
 function todo($chk, path, strike) {
+    //skip when locked
+    if (todoplugin_locked.todo) {
+        return;
+    }
+    todoplugin_locked.todo = true;
 
     /**
-     * +Checkbox
-     * +Span
-     * -Hidden
-     * -Span
-     * --Anchor
-     * ---Del
+     * +input[checkbox]
+     * +span.todotext
+     * -input[hidden]
+     * -del
+     * --span.todoinnertext
+     * ---anchor with text or text only
      */
 
-
-    //console.log( "got $chk with data-id='"+$chk.attr("data-index")+"' $chk.is(':checked')='"+$chk.is(':checked')+"'" );
-    var $inputTodohiddentext = $chk.nextAll("span.todotext").children("input.todohiddentext").first(),
-        $spanTodoinnertext = $chk.nextAll("span.todotext").children("span.todoinnertext").first(),
+    var $inputTodohiddentext = $chk.nextAll("span.todotext").first().find("input.todohiddentext"),
+        $spanTodoinnertext = $chk.nextAll("span.todotext").first().find("span.todoinnertext"),
         index = $chk.data('index'),
-        checked,
+        checked = $chk.is(':checked'),
         date = $chk.data('date');
 
     // if the data-index attribute is set, this is a call from the page where the todos are defined
     // otherwise this is a call from searchpattern dokuwiki plugin rendered page
     if (index === undefined) index = -1;
 
-    if ($spanTodoinnertext && $inputTodohiddentext) {
-        //if( $chk.attr('checked') ) {
-        // @date 20130413 Christian bugfix $chk.attr('checked') returns checkbox state from html - use $chk.is(':checked') - see http://www.unforastero.de/jquery/checkbox-angehakt.php
-        if ($chk.is(':checked')) {
-            checked = "1";
-            if (strike) {
-                $spanTodoinnertext.html("<del>" + decodeURIComponent($inputTodohiddentext.val().replace(/\+/g, " ")).replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</del>");
+    if ($spanTodoinnertext[0] && $inputTodohiddentext[0]) {
+        if (checked) {
+            if (strike && !$spanTodoinnertext.parent().is("del")) {
+                $spanTodoinnertext.wrap("<del></del>");
             }
         } else {
-            checked = "0";
-            $spanTodoinnertext.html(decodeURIComponent($inputTodohiddentext.val().replace(/\+/g, " ")).replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+            if ($spanTodoinnertext.parent().is("del")) {
+                $spanTodoinnertext.unwrap();
+            }
         }
 
         var whenCompleted = function (data) {
             //update date after edit and show alert when needed
             if (data.date)
                 jQuery('input.todocheckbox').data('date', data.date);
+
             if (data.message)
                 alert(data.message);
+
+            todoplugin_locked = {clickspan: false, todo: false};
         };
 
         jQuery.post(
@@ -100,7 +113,7 @@ function todo($chk, path, strike) {
                 call: 'plugin_todo',
                 index: index,
                 path: path,
-                checked: checked,
+                checked: checked ? "1" : "0",
                 origVal: $inputTodohiddentext.val().replace(/\+/g, " "),
                 date: date
             },

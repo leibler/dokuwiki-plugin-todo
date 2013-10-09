@@ -78,9 +78,9 @@
  * [09/10/2009]: Removed unnecessary function calls (urlencode) in _createLink() function 
  * [09/09/2009]: Added ability for user to choose where Action links point to 
  * [08/30/2009]: Initial Release
- */  
+ */
 
-if(!defined('DOKU_INC')) define('DOKU_INC',realpath(dirname(__FILE__).'/../../').'/');
+if(!defined('DOKU_INC')) die();
 
 /**
  * All DokuWiki plugins to extend the parser/rendering mechanism
@@ -96,7 +96,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @public
     * @static
     */
-    function getType(){
+    public function getType(){
         return 'substition';
     }
  
@@ -137,7 +137,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @public
     * @static
     */
-    function getSort(){
+    public function getSort(){
         return 999;
     }
 
@@ -150,11 +150,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @public
     * @see render()
     */
-    function connectTo($mode) {
+    public function connectTo($mode) {
       $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)',$mode,'plugin_todo');
     }
- 
-    function postConnect() {
+
+    public function postConnect() {
       $this->Lexer->addExitPattern('</todo>','plugin_todo');
     }
  
@@ -188,8 +188,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @see render()
     * @static
     */
-    function handle($match, $state, $pos, &$handler){
-        global $ID;
+    public function handle($match, $state, $pos, &$handler){
         switch ($state) {
           case DOKU_LEXER_ENTER :
             #Search to see if the '#' is in the todo tag (if so, this means the Action has been completed)
@@ -214,60 +213,27 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
           case DOKU_LEXER_MATCHED :
             break;
           case DOKU_LEXER_UNMATCHED :
-            /*
-            ** Structure:
-            ** input(checkbox)
-            ** <span>
-            ** -input(hidden)
-            ** -<a> (if links is on) or <span> (if links is off)
-            ** --<del> (if strikethrough is on) or --NOTHING--
-            ** -</a> or </span>            
-            ** </span>            
-            */                                                            
+            /**
+             * Structure:
+             * input(checkbox)
+             * <span>
+             * -input(hidden)
+             * -<a> (if links is on) or <span> (if links is off)
+             * --<del> (if strikethrough is on) or --NOTHING--
+             * -</a> or </span>
+             * </span>
+             */
           
-            #Determine if the checkbox should be checked
-            $checked = "";
-            if($handler->checked){ $checked = "checked=\"checked\""; }
-            
-			#Determine if we should apply strikethrough
-			if($this->getConf("Strikethrough") == true) {
-				$Strikethrough = 1;
-			} else {
-				$Strikethrough = 0;
-			}
-            
-            #If we are not displaying links, then the text should also check the checkbox
-			if($this->getConf("CheckboxText") == true){
-				if($this->getConf("AllowLinks") == true) {
-					$span = "<span class=\"todotext\">";
-				} else {
-					$span = "<span class=\"todotext todohlght\" onclick=\"clickSpan(jQuery(this), '" . addslashes($ID) . "', ".$Strikethrough.")\">";
-				}
-			} else {
-				$span = "<span class=\"todotext\">";
-			}
-            
+
             #Make sure there is actually an action to create
-			if(trim($match) != ""){
-				#Generate Beginning of Checkbox
-				// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
-				$begin = '<input type="checkbox" class="todocheckbox" data-index="'.$handler->todo_index.'" data-date="'.hsc(@filemtime(wikiFN($ID))).'" onclick="todo(jQuery(this), \'' . addslashes($ID) . '\', '.$Strikethrough.')" '.$checked.' /> ';
-				# a username was assigned to this task
-				if( $handler->todo_user ) {
-					$begin .= '<span class="todouser">['.htmlspecialchars($handler->todo_user).']</span>';
-				}
-				$begin .= $span;
+			if(trim($match) != ''){
 
-				#Generate Hidden Field to Hold Original Title of Action
-				$begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
-
-				#Generate Closing Tag
-				$end = "</span>";
+                $data = array($state, $match, $handler->todo_index, $handler->todo_user, $handler->checked);
 
 				$handler->todo_index++;
-				#Return the information for renderer
-				return array($state, array($begin, $match, $end, $handler->checked));
+				return $data;
 			}
+
 			break;
           case DOKU_LEXER_EXIT :
             #Delete temporary checked variable
@@ -291,43 +257,31 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * handling the rendering. The contents of <tt>$aData</tt> is the
     * return value of the <tt>handle()</tt> method.
     * </p>
-    * @param  $mode     String              The output format to generate.
-    * @param &$renderer Doku_Renderer_xhtml A reference to the renderer object.
-    * @param  $data     Array               The data created by the <tt>handle()</tt>
-    * method.
+    * @param  $mode     String        The output format to generate.
+    * @param &$renderer Doku_Renderer A reference to the renderer object.
+    * @param  $data     Array         The data created by the <tt>handle()</tt> method.
     * @return Boolean
     * <tt>TRUE</tt> if rendered successfully, or
     * <tt>FALSE</tt> otherwise.
     * @public
     * @see handle()
     */
-    function render($mode, &$renderer, $data) {
-        if($mode == 'xhtml'){
-            if($data[0] == DOKU_LEXER_UNMATCHED){
-              # $text variable will hold our output
-              $text = $data[1][0];
-              
-              #Determine if we are to allow Actions to also show up as links 
-              if($this->getConf("AllowLinks") == true){
-                #Should we allow Strikethrough or not
-                if($data[1][3] == true && $this->getConf("Strikethrough") == true){
-                  $text .= $this->_createLink($renderer, $data[1][1], "<del>".$data[1][1]."</del>");
-                }else{
-                  $text .= $this->_createLink($renderer, $data[1][1], $data[1][1]);
-                }                
-              }else{
-                #Should we allow Strikethrough or not
-                if($data[1][3] == true && $this->getConf("Strikethrough") == true){
-                  $text .= '<span class="todoinnertext"><del>'.htmlspecialchars($data[1][1]).'</del></span>';
-                }else{
-                  $text .= '<span class="todoinnertext">'.htmlspecialchars($data[1][1]).'</span>';
-                }      
-              }
-              $text .= $data[1][2];
-               
-              #Output our result
-              $renderer->doc .= $text;   // ptype = 'normal'
-              return true;
+    public function render($mode, &$renderer, $data) {
+        list($state, $todotitle, $todoindex, $todouser, $checked) = $data;
+        if($mode == 'xhtml') {
+            /** @var $renderer Doku_Renderer_xhtml */
+            if($state == DOKU_LEXER_UNMATCHED) {
+
+                #Output our result
+                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked);
+                return true;
+            }
+
+        } elseif($mode == 'meta') {
+            /** @var $renderer Doku_Renderer_metadata */
+            if($state == DOKU_LEXER_UNMATCHED) {
+                $id = $this->composePageid($todotitle);
+                $renderer->internallink($id, $todotitle);
             }
         }
         return false;
@@ -353,7 +307,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @param string               $value    value which should be outputted by searchpattern
      * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
      */
-	function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
+	public function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
 		if( $this->getConf("Strikethrough") == true ) {
 			$Strikethrough = 1;
 		} else {
@@ -422,7 +376,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 								// Possible solution:
 								//   maybe we only should count the not checked checkboxes so this should be the same
 								//   database like the backend file
-								$begin = "<input type=\"checkbox\" class=\"todocheckbox\" onclick=\"todo(jQuery(this), '" . addslashes($page) . "', ".$Strikethrough.")\" ".( $checked ? 'checked="checked" ': '' )." /> ";
+								$begin = '<input type="checkbox" class="todocheckbox" onclick="todo(jQuery(this), \'' . addslashes($page) . '\', '.$Strikethrough.')" '.( $checked ? 'checked="checked" ': '' ).' /> ';
 								$begin .= $span;
               
 								#Generate Hidden Field to Hold Original Title of Action
@@ -474,55 +428,89 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 		// false means, that this handler method does not output anything. all should be done by searchpattern plugin
 		return false;
 	}
-    
+
+    /**
+     * @param Doku_Renderer_xhtml &$renderer
+     * @param string               $todotitle Title of todoitem
+     * @param int                  $todoindex
+     * @param string               $todouser  User assigned to todoitem
+     * @param bool                 $checked   whether item is done
+     * @return string html of an item
+     */
+    private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked) {
+        global $ID;
+        $jsargs = 'jQuery(this), \'' . addslashes($ID) . '\', '.($this->getConf("Strikethrough") ? '1' : '0');
+
+        $return = '<input type="checkbox" class="todocheckbox"
+                          data-index="'.$todoindex.'" data-date="'.hsc(@filemtime(wikiFN($ID))).'"
+                          onclick="todo('.$jsargs.')" '.($checked ? 'checked="checked"' : '').' /> ';
+		if($todouser) {
+            $return .= '<span class="todouser">['.hsc($todouser).']</span>';
+        }
+
+        if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks")) {
+            $clickabletext = ' todohlght" onclick="clickSpan('.$jsargs.')';
+        } else {
+            $clickabletext = '';
+        }
+        $return .= '<span class="todotext'.$clickabletext.'">';
+        #Generate Hidden Field to Hold Original Title of Action
+        $return .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($todotitle) . "\" />"; //TODO hsc()?
+
+
+        if($checked && $this->getConf("Strikethrough")) {
+            $return .= '<del>';
+        }
+
+        $return .= '<span class="todoinnertext">';
+        if($this->getConf("AllowLinks")) {
+            $return .= $this->_createLink($renderer, $todotitle, $todotitle);
+        } else {
+            $return .= hsc($todotitle);
+        }
+        $return .= '</span>';
+
+        if($checked && $this->getConf("Strikethrough")) {
+            $return .= '</del>';
+        }
+
+        $return .= '</span>';
+        return $return;
+    }
+
     /**
      * Generate links from our Actions if necessary.
      *
-     * @param Doku_Renderer_xhtml  &$renderer
-     * @param string                $url
-     * @param string                $name
+     * @param Doku_Renderer_xhtml &$renderer
+     * @param string               $pagename
+     * @param string               $name
      * @return string
      */         
-    function _createLink(&$renderer, $url, $name = NULL){
-      global $ID, $conf;
-      
-      #Determine URL
-      $fullURL = "doku.php?id=";
-      
-      #Get the ActionNamespace and make sure it ends with a : (if not, add it)
-      $actionNamespace = $this->getConf("ActionNamespace");
-      if(strlen($actionNamespace) == 0 || substr($actionNamespace, -1) != ':'){
-        $actionNamespace .= ":";
-      }
-      
-      #Replace ':' in $url so we don't create unnecessary namespaces
-      $url = str_replace(':', '-', $url);
-      
-      #Resolve what the fullURL should be to the file (fix any relative pages [".:"] $actionNamespace might have)
-      $pageName = $actionNamespace . $url;
-      $pageExists = false;
-      resolve_pageid(getNS($ID), $pageName, $pageExists);      
-      $fullURL .= $pageName;
-           
-      #Determine Class
-      $class = 'wikilink1';
-      if(!$pageExists){
-        $class='wikilink2';
-      }
-      
-      #Generate Link Structure
-      $link['target'] = $conf['target']['wiki'];
-      $link['style']  = '';
-      $link['pre']    = '';
-      $link['suf']    = '';
-      $link['more']   = '';
-      $link['class']  = $class;
-      $link['url']    = $fullURL;
-      $link['name']   = $name;
-      $link['title']  = $renderer->_xmlEntities($url);
- 
-      #Return our final (formatted) link
-      return $renderer->_formatLink($link);
+    private function _createLink(&$renderer, $pagename, $name = NULL){
+        $id = $this->composePageid($pagename);
+
+        return $renderer->internallink($id, $name, null, true);
+    }
+
+    /**
+     * Compose the pageid of the pages linked by a todoitem
+     *
+     * @param string $pagename
+     * @return string page id
+     */
+    private function composePageid($pagename) {
+        #Get the ActionNamespace and make sure it ends with a : (if not, add it)
+        $actionNamespace = $this->getConf("ActionNamespace");
+        if(strlen($actionNamespace) == 0 || substr($actionNamespace, -1) != ':') {
+            $actionNamespace .= ":";
+        }
+
+        #Replace ':' in $pagename so we don't create unnecessary namespaces
+        $pagename = str_replace(':', '-', $pagename);
+
+        //resolve and build link
+        $id = $actionNamespace . $pagename;
+        return $id;
     }
 }
  

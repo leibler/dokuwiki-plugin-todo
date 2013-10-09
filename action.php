@@ -84,7 +84,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             // index = position of occurrence of <input> element (starting with 0 for first element)
             $index = (int) $_REQUEST['index'];
             // checked = flag if input is checked means to do is complete (1) or not (0)
-            $checked = urldecode($_REQUEST['checked']);
+            $checked = (boolean) urldecode($_REQUEST['checked']);
             // path = page ID (name)
             $ID = cleanID(urldecode($_REQUEST['path']));
         } else {
@@ -120,7 +120,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
         #Determine position of tag
         $contentChanged = false;
-
+        $todoTagStartPos = $todoTagEndPos = 0;
         if($index >= 0) {
             $index++;
             // index is only set on the current page with the todos
@@ -146,9 +146,9 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         }
 
         // Modify content
-        if($contentChanged) {
+        if($contentChanged && $todoTagEndPos > $todoTagStartPos) {
             // update text
-            $oldTag = substr($wikitext, $todoTagStartPos, $todoTagEndPos - $todoTagStartPos);
+            $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
             $newTag = $this->_buildTodoTag($oldTag, $checked);
             $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
 
@@ -163,6 +163,11 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
     }
 
+    /**
+     * Encode and print an arbitrary variable into JSON format
+     *
+     * @param mixed $return
+     */
     private function printJson($return) {
         $json = new JSON();
         echo $json->encode($return);
