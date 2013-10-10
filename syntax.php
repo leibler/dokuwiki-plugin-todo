@@ -205,7 +205,6 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
                  * Structure:
                  * input(checkbox)
                  * <span>
-                 * -input(hidden)
                  * -<a> (if links is on) or <span> (if links is off)
                  * --<del> (if strikethrough is on) or --NOTHING--
                  * -</a> or </span>
@@ -328,8 +327,6 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
             $clickabletext = '';
         }
         $return .= '<span class="todotext' . $clickabletext . '">';
-        #Generate Hidden Field to Hold Original Title of Action
-        $return .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($todotitle) . "\" />"; //TODO hsc()?
 
         if($checked && $this->getConf("Strikethrough")) {
             $return .= '<del>';

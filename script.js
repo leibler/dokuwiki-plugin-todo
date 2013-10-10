@@ -18,7 +18,7 @@
 /**
  * lock to prevent simultanous requests
  */
-var todoplugin_locked = {clickspan: false, todo: false};
+var todoplugin_locked = { clickspan: false, todo: false };
 /**
  * @brief onclick method for span element
  * @param {jQuery} $span  the jQuery span element
@@ -69,14 +69,12 @@ function todo($chk, path, strike) {
     /**
      * +input[checkbox]
      * +span.todotext
-     * -input[hidden]
      * -del
      * --span.todoinnertext
      * ---anchor with text or text only
      */
 
-    var $inputTodohiddentext = $chk.nextAll("span.todotext").first().find("input.todohiddentext"),
-        $spanTodoinnertext = $chk.nextAll("span.todotext").first().find("span.todoinnertext"),
+    var $spanTodoinnertext = $chk.nextAll("span.todotext").first().find("span.todoinnertext"),
         index = $chk.data('index'),
         checked = $chk.is(':checked'),
         date = $chk.data('date');
@@ -85,7 +83,7 @@ function todo($chk, path, strike) {
     // otherwise this is a call from searchpattern dokuwiki plugin rendered page
     if (index === undefined) index = -1;
 
-    if ($spanTodoinnertext[0] && $inputTodohiddentext[0]) {
+    if ($spanTodoinnertext[0]) {
         if (checked) {
             if (strike && !$spanTodoinnertext.parent().is("del")) {
                 $spanTodoinnertext.wrap("<del></del>");
@@ -98,13 +96,13 @@ function todo($chk, path, strike) {
 
         var whenCompleted = function (data) {
             //update date after edit and show alert when needed
-            if (data.date)
+            if (data.date) {
                 jQuery('input.todocheckbox').data('date', data.date);
-
-            if (data.message)
+            }
+            if (data.message) {
                 alert(data.message);
-
-            todoplugin_locked = {clickspan: false, todo: false};
+            }
+            todoplugin_locked = { clickspan: false, todo: false };
         };
 
         jQuery.post(
@@ -114,7 +112,6 @@ function todo($chk, path, strike) {
                 index: index,
                 path: path,
                 checked: checked ? "1" : "0",
-                origVal: $inputTodohiddentext.val().replace(/\+/g, " "),
                 date: date
             },
             whenCompleted,

@@ -68,7 +68,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @param mixed $param not defined
      */
     public function _ajax_call(&$event, $param) {
-        global $ID, $DATE;
+        global $ID;
 
         if($event->data !== 'plugin_todo') {
             return;
@@ -90,9 +90,6 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         } else {
             return;
         }
-        // origVal = urlencoded original value (in the case this is called by dokuwiki searchpattern plugin rendered page)
-        $origVal = '';
-        if(isset($_REQUEST['origVal'])) $origVal = urldecode($_REQUEST['origVal']);
 
         $date = 0;
         if(isset($_REQUEST['date'])) $date = (int) $_REQUEST['date'];
@@ -119,48 +116,28 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         $wikitext = rawWiki($ID);
 
         #Determine position of tag
-        $contentChanged = false;
-        $todoTagStartPos = $todoTagEndPos = 0;
         if($index >= 0) {
             $index++;
             // index is only set on the current page with the todos
             // the occurances are counted, untill the index-th input is reached which is updated
             $todoTagStartPos = strnpos($wikitext, '<todo', $index);
             $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
+
             if($todoTagEndPos > $todoTagStartPos) {
-                $contentChanged = true;
-            }
-        } else {
-            // this will happen if we are on a dokuwiki searchpattern plugin summary page
-            $checkedpattern = $checked ? '' : '*#[^>]';
-            $pattern = '/(<todo[^#>]' . $checkedpattern . '*>(' . preg_quote($origVal) . '<\/todo[\W]*?>))/';
+                // update text
+                $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
+                $newTag = $this->_buildTodoTag($oldTag, $checked);
+                $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
 
-            $x = preg_match_all($pattern, $wikitext, $spMatches, PREG_OFFSET_CAPTURE);
-            if($x && isset($spMatches[0][0])) {
-                // yes, we found matches and index is in a valid range
-                $todoTagStartPos = $spMatches[1][0][1];
-                $todoTagEndPos = $spMatches[2][0][1];
+                // save Update (Minor)
+                lock($ID);
+                saveWikiText($ID, $wikitext, 'Checkbox Change', $minoredit = true);
+                unlock($ID);
 
-                $contentChanged = true;
+                $return = array('date' => @filemtime(wikiFN($ID)));
+                $this->printJson($return);
             }
         }
-
-        // Modify content
-        if($contentChanged && $todoTagEndPos > $todoTagStartPos) {
-            // update text
-            $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
-            $newTag = $this->_buildTodoTag($oldTag, $checked);
-            $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
-
-            // save Update (Minor)
-            lock($ID);
-            saveWikiText($ID, $wikitext, 'Checkbox Change', $minoredit = true);
-            unlock($ID);
-
-            $return = array('date' => @filemtime(wikiFN($ID)));
-            $this->printJson($return);
-        }
-
     }
 
     /**
