@@ -3,25 +3,25 @@
  * ToDo Plugin: Creates a checkbox based todo list
  *
  * Syntax: <todo [@username] [#]>Name of Action</todo> -
- *  Creates a Checkbox with the "Name of Action" as 
+ *  Creates a Checkbox with the "Name of Action" as
  *  the text associated with it. The hash (#, optional)
  *  will cause the checkbox to be checked by default.
  *  The @ sign followed by a username can be used to assign this todo to a user.
- *  examples: 
+ *  examples:
  *     A todo without user assignment
- *       <todo>Something todo</todo>   
+ *       <todo>Something todo</todo>
  *     A completed todo without user assignment
- *       <todo #>Completed todo</todo>   
+ *       <todo #>Completed todo</todo>
  *     A todo assigned to user User
- *       <todo @leo>Something todo for Leo</todo>   
+ *       <todo @leo>Something todo for Leo</todo>
  *     A completed todo assigned to user User
- *       <todo @leo #>Todo completed for Leo</todo>   
- * 
+ *       <todo @leo #>Todo completed for Leo</todo>
+ *
  * In combination with dokuwiki searchpattern plugin version (at least v20130408),
  * it is a lightweight solution for a task management system based on dokuwiki.
- * use this searchpattern expression for open todos: 
+ * use this searchpattern expression for open todos:
  *     ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
- * use this searchpattern expression for completed todos: 
+ * use this searchpattern expression for completed todos:
  *     ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
  * do not forget the no-cache option
  *     ~~NOCACHE~~
@@ -37,8 +37,8 @@
 /**
  * ChangeLog:
  *
-** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
-**               bugfix: config option Strikethrough
+ ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
+ **               bugfix: config option Strikethrough
  * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  *               bugfix: encoding html code (security risk <todo><script>alert('hi')</script></todo>) - bug reported by Andreas
  *               bugfix: use correct <todo> tag if there are more than 1 in the same line.
@@ -56,27 +56,27 @@
  * [04/05/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  *               upgrade plugin to work with newest version of dokuwiki (tested version Release 2013-03-06 Weatherwax RC1).
  * [08/16/2010]: Fixed another bug where javascript would not decode the action
- *               text properly (replaced unescape with decodeURIComponent).  
+ *               text properly (replaced unescape with decodeURIComponent).
  * [04/03/2010]: Fixed a bug where javascript would not decode the action text
- *               properly.  
+ *               properly.
  * [03/31/2010]: Fixed a bug where checking or unchecking an action whose text
  *               appeared outside of the todo tags, would result in mangling the
  *               code on your page. Also added support for using the ampersand
- *               character (&) and html entities inside of your todo action.        
+ *               character (&) and html entities inside of your todo action.
  * [02/27/2010]: Created an action plugin to insert a ToDo button into the
- *               editor toolbar.  
+ *               editor toolbar.
  * [10/14/2009]: Added the feature so that if you have Links turned off and you
  *               click on the text of an action, it will check that action off.
  *               Thanks to Tero for the suggestion! (Plugin Option: CheckboxText)
- * [10/08/2009]: I am no longer using the short open php tag (<?) for my 
- *               ajax.php file. This was causing some problems for people who had 
- *               short_open_tags=Off in their php.ini file (thanks Marcus!)                  
+ * [10/08/2009]: I am no longer using the short open php tag (<?) for my
+ *               ajax.php file. This was causing some problems for people who had
+ *               short_open_tags=Off in their php.ini file (thanks Marcus!)
  * [10/01/2009]: Updated javascript to use .nextSibling instead of .nextElementSibling
- *               to make it compatible with older versions of Firefox and IE.  
- * [09/13/2009]: Replaced ':' with a '-' in the action link so as not to create 
- *               unnecessary namespaces (if the links option is active) 
- * [09/10/2009]: Removed unnecessary function calls (urlencode) in _createLink() function 
- * [09/09/2009]: Added ability for user to choose where Action links point to 
+ *               to make it compatible with older versions of Firefox and IE.
+ * [09/13/2009]: Replaced ':' with a '-' in the action link so as not to create
+ *               unnecessary namespaces (if the links option is active)
+ * [09/10/2009]: Removed unnecessary function calls (urlencode) in _createLink() function
+ * [09/09/2009]: Added ability for user to choose where Action links point to
  * [08/30/2009]: Initial Release
  */
 
@@ -87,175 +87,172 @@ if(!defined('DOKU_INC')) die();
  * need to inherit from this class
  */
 class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
- 
-   /**
-    * Get the type of syntax this plugin defines.
-    *
-    * @param none
-    * @return String <tt>'substition'</tt> (i.e. 'substitution').
-    * @public
-    * @static
-    */
-    public function getType(){
+
+    /**
+     * Get the type of syntax this plugin defines.
+     *
+     * @param none
+     * @return String <tt>'substition'</tt> (i.e. 'substitution').
+     * @public
+     * @static
+     */
+    public function getType() {
         return 'substition';
     }
- 
+
     /**
      * What kind of syntax do we allow (optional)
      */
 //    function getAllowedTypes() {
-        //return array('formatting', 'substition', 'disabled');;
+    //return array('formatting', 'substition', 'disabled');;
 //    }
- 
-   /**
-    * Define how this plugin is handled regarding paragraphs.
-    *
-    * <p>
-    * This method is important for correct XHTML nesting. It returns
-    * one of the following values:
-    * </p>
-    * <dl>
-    * <dt>normal</dt><dd>The plugin can be used inside paragraphs.</dd>
-    * <dt>block</dt><dd>Open paragraphs need to be closed before
-    * plugin output.</dd>
-    * <dt>stack</dt><dd>Special case: Plugin wraps other paragraphs.</dd>
-    * </dl>
-    * @param none
-    * @return String <tt>'block'</tt>.
-    * @public
-    * @static
-    */
+
+    /**
+     * Define how this plugin is handled regarding paragraphs.
+     *
+     * <p>
+     * This method is important for correct XHTML nesting. It returns
+     * one of the following values:
+     * </p>
+     * <dl>
+     * <dt>normal</dt><dd>The plugin can be used inside paragraphs.</dd>
+     * <dt>block</dt><dd>Open paragraphs need to be closed before
+     * plugin output.</dd>
+     * <dt>stack</dt><dd>Special case: Plugin wraps other paragraphs.</dd>
+     * </dl>
+     * @param none
+     * @return String <tt>'block'</tt>.
+     * @public
+     * @static
+     */
 //    function getPType(){
 //        return 'normal';
 //    }
- 
-   /**
-    * Where to sort in?
-    *
-    * @param none
-    * @return Integer <tt>6</tt>.
-    * @public
-    * @static
-    */
-    public function getSort(){
+
+    /**
+     * Where to sort in?
+     *
+     * @param none
+     * @return Integer <tt>6</tt>.
+     * @public
+     * @static
+     */
+    public function getSort() {
         return 999;
     }
 
-
-   /**
-    * Connect lookup pattern to lexer.
-    *
-    * @param $mode String The desired rendermode.
-    * @return void
-    * @public
-    * @see render()
-    */
+    /**
+     * Connect lookup pattern to lexer.
+     *
+     * @param $mode String The desired rendermode.
+     * @return void
+     * @public
+     * @see render()
+     */
     public function connectTo($mode) {
-      $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)',$mode,'plugin_todo');
+        $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo');
     }
 
     public function postConnect() {
-      $this->Lexer->addExitPattern('</todo>','plugin_todo');
+        $this->Lexer->addExitPattern('</todo>', 'plugin_todo');
     }
- 
- 
-   /**
-    * Handler to prepare matched data for the rendering process.
-    *
-    * <p>
-    * The <tt>$aState</tt> parameter gives the type of pattern
-    * which triggered the call to this method:
-    * </p>
-    * <dl>
-    * <dt>DOKU_LEXER_ENTER</dt>
-    * <dd>a pattern set by <tt>addEntryPattern()</tt></dd>
-    * <dt>DOKU_LEXER_MATCHED</dt>
-    * <dd>a pattern set by <tt>addPattern()</tt></dd>
-    * <dt>DOKU_LEXER_EXIT</dt>
-    * <dd> a pattern set by <tt>addExitPattern()</tt></dd>
-    * <dt>DOKU_LEXER_SPECIAL</dt>
-    * <dd>a pattern set by <tt>addSpecialPattern()</tt></dd>
-    * <dt>DOKU_LEXER_UNMATCHED</dt>
-    * <dd>ordinary text encountered within the plugin's syntax mode
-    * which doesn't match any pattern.</dd>
-    * </dl>
-    * @param $match    string  The text matched by the patterns.
-    * @param $state    int     The lexer state for the match.
-    * @param $pos      int     The character position of the matched text.
-    * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
-    * @return int The current lexer state for the match.
-    * @public
-    * @see render()
-    * @static
-    */
-    public function handle($match, $state, $pos, &$handler){
-        switch ($state) {
-          case DOKU_LEXER_ENTER :
-            #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
-			$x = preg_match( '%<todo([^>]*)>%i', $match, $tododata );
-			if( $x ) {
-                list($handler->checked, $handler->todo_user) = $this->_parseTodoArgs($tododata[1]);
-			}
-			if( !is_numeric($handler->todo_index) ) {
-				$handler->todo_index = 0;
-			}
-            break;
-          case DOKU_LEXER_MATCHED :
-            break;
-          case DOKU_LEXER_UNMATCHED :
-            /**
-             * Structure:
-             * input(checkbox)
-             * <span>
-             * -input(hidden)
-             * -<a> (if links is on) or <span> (if links is off)
-             * --<del> (if strikethrough is on) or --NOTHING--
-             * -</a> or </span>
-             * </span>
-             */
-          
 
-            #Make sure there is actually an action to create
-			if(trim($match) != ''){
+    /**
+     * Handler to prepare matched data for the rendering process.
+     *
+     * <p>
+     * The <tt>$aState</tt> parameter gives the type of pattern
+     * which triggered the call to this method:
+     * </p>
+     * <dl>
+     * <dt>DOKU_LEXER_ENTER</dt>
+     * <dd>a pattern set by <tt>addEntryPattern()</tt></dd>
+     * <dt>DOKU_LEXER_MATCHED</dt>
+     * <dd>a pattern set by <tt>addPattern()</tt></dd>
+     * <dt>DOKU_LEXER_EXIT</dt>
+     * <dd> a pattern set by <tt>addExitPattern()</tt></dd>
+     * <dt>DOKU_LEXER_SPECIAL</dt>
+     * <dd>a pattern set by <tt>addSpecialPattern()</tt></dd>
+     * <dt>DOKU_LEXER_UNMATCHED</dt>
+     * <dd>ordinary text encountered within the plugin's syntax mode
+     * which doesn't match any pattern.</dd>
+     * </dl>
+     * @param $match    string  The text matched by the patterns.
+     * @param $state    int     The lexer state for the match.
+     * @param $pos      int     The character position of the matched text.
+     * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
+     * @return int The current lexer state for the match.
+     * @public
+     * @see render()
+     * @static
+     */
+    public function handle($match, $state, $pos, &$handler) {
+        switch($state) {
+            case DOKU_LEXER_ENTER :
+                #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
+                $x = preg_match('%<todo([^>]*)>%i', $match, $tododata);
+                if($x) {
+                    list($handler->checked, $handler->todo_user) = $this->_parseTodoArgs($tododata[1]);
+                }
+                if(!is_numeric($handler->todo_index)) {
+                    $handler->todo_index = 0;
+                }
+                break;
+            case DOKU_LEXER_MATCHED :
+                break;
+            case DOKU_LEXER_UNMATCHED :
+                /**
+                 * Structure:
+                 * input(checkbox)
+                 * <span>
+                 * -input(hidden)
+                 * -<a> (if links is on) or <span> (if links is off)
+                 * --<del> (if strikethrough is on) or --NOTHING--
+                 * -</a> or </span>
+                 * </span>
+                 */
 
-                $data = array($state, $match, $handler->todo_index, $handler->todo_user, $handler->checked);
+                #Make sure there is actually an action to create
+                if(trim($match) != '') {
 
-				$handler->todo_index++;
-				return $data;
-			}
+                    $data = array($state, $match, $handler->todo_index, $handler->todo_user, $handler->checked);
 
-			break;
-          case DOKU_LEXER_EXIT :
-            #Delete temporary checked variable
-            unset($handler->todo_user);
-            unset($handler->checked);
-			//unset($handler->todo_index);
-            break;
-          case DOKU_LEXER_SPECIAL :
-            break;
+                    $handler->todo_index++;
+                    return $data;
+                }
+
+                break;
+            case DOKU_LEXER_EXIT :
+                #Delete temporary checked variable
+                unset($handler->todo_user);
+                unset($handler->checked);
+                //unset($handler->todo_index);
+                break;
+            case DOKU_LEXER_SPECIAL :
+                break;
         }
         return array();
     }
- 
-   /**
-    * Handle the actual output creation.
-    *
-    * <p>
-    * The method checks for the given <tt>$aFormat</tt> and returns
-    * <tt>FALSE</tt> when a format isn't supported. <tt>$aRenderer</tt>
-    * contains a reference to the renderer object which is currently
-    * handling the rendering. The contents of <tt>$aData</tt> is the
-    * return value of the <tt>handle()</tt> method.
-    * </p>
-    * @param  $mode     String        The output format to generate.
-    * @param &$renderer Doku_Renderer A reference to the renderer object.
-    * @param  $data     Array         The data created by the <tt>handle()</tt> method.
-    * @return Boolean
-    * <tt>TRUE</tt> if rendered successfully, or
-    * <tt>FALSE</tt> otherwise.
-    * @public
-    * @see handle()
-    */
+
+    /**
+     * Handle the actual output creation.
+     *
+     * <p>
+     * The method checks for the given <tt>$aFormat</tt> and returns
+     * <tt>FALSE</tt> when a format isn't supported. <tt>$aRenderer</tt>
+     * contains a reference to the renderer object which is currently
+     * handling the rendering. The contents of <tt>$aData</tt> is the
+     * return value of the <tt>handle()</tt> method.
+     * </p>
+     * @param  $mode     String        The output format to generate.
+     * @param &$renderer Doku_Renderer A reference to the renderer object.
+     * @param  $data     Array         The data created by the <tt>handle()</tt> method.
+     * @return Boolean
+     * <tt>TRUE</tt> if rendered successfully, or
+     * <tt>FALSE</tt> otherwise.
+     * @public
+     * @see handle()
+     */
     public function render($mode, &$renderer, $data) {
         global $ID;
         list($state, $todotitle, $todoindex, $todouser, $checked) = $data;
@@ -302,11 +299,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * @param Doku_Renderer_xhtml &$renderer
-     * @param string               $todotitle Title of todoitem
-     * @param int                  $todoindex which number the todoitem has, null is when not at the page
-     * @param string               $todouser  User assigned to todoitem
-     * @param bool                 $checked   whether item is done
-     * @param string               $id of page
+     * @param string $todotitle Title of todoitem
+     * @param int $todoindex which number the todoitem has, null is when not at the page
+     * @param string $todouser  User assigned to todoitem
+     * @param bool $checked   whether item is done
+     * @param string $id of page
      * @return string html of an item
      */
     private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
@@ -315,10 +312,10 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         $oldID = $ID;
         $ID = $id;
 
-        $jsargs = 'jQuery(this), \'' . addslashes($ID) . '\', '.($this->getConf("Strikethrough") ? '1' : '0');
+        $jsargs = 'jQuery(this), \'' . addslashes($ID) . '\', ' . ($this->getConf("Strikethrough") ? '1' : '0');
 
         $return = '<input type="checkbox" class="todocheckbox" onclick="todo(' . $jsargs . ')" '
-            . ($todoindex === null ? '' : 'data-index="' . $todoindex . '"' )
+            . ($todoindex === null ? '' : 'data-index="' . $todoindex . '"')
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ($checked ? 'checked="checked"' : '') . ' /> ';
         if($todouser) {
@@ -326,14 +323,13 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         }
 
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks")) {
-            $clickabletext = ' todohlght" onclick="clickSpan('.$jsargs.')';
+            $clickabletext = ' todohlght" onclick="clickSpan(' . $jsargs . ')';
         } else {
             $clickabletext = '';
         }
-        $return .= '<span class="todotext'.$clickabletext.'">';
+        $return .= '<span class="todotext' . $clickabletext . '">';
         #Generate Hidden Field to Hold Original Title of Action
         $return .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($todotitle) . "\" />"; //TODO hsc()?
-
 
         if($checked && $this->getConf("Strikethrough")) {
             $return .= '<del>';
@@ -362,11 +358,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * Generate links from our Actions if necessary.
      *
      * @param Doku_Renderer_xhtml &$renderer
-     * @param string               $pagename
-     * @param string               $name
+     * @param string $pagename
+     * @param string $name
      * @return string
-     */         
-    private function _createLink(&$renderer, $pagename, $name = NULL){
+     */
+    private function _createLink(&$renderer, $pagename, $name = NULL) {
         $id = $this->_composePageid($pagename);
 
         return $renderer->internallink($id, $name, null, true);
@@ -393,7 +389,6 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         return $id;
     }
 
-
     /**
      * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
      * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
@@ -408,11 +403,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
      *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
      * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
-     * @param array                $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
-     * @param array                $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
-     * @param string               $page     id of current page
-     * @param array                $params   the parameters set by searchpattern (see search pattern documentation)
-     * @param string               $value    value which should be outputted by searchpattern
+     * @param array $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
+     * @param array $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
+     * @param string $page     id of current page
+     * @param array $params   the parameters set by searchpattern (see search pattern documentation)
+     * @param string $value    value which should be outputted by searchpattern
      * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
      */
     public function _searchpatternHandler($type, &$renderer, $data, $matches, $params = array(), $page = null, $value = null) {
@@ -477,5 +472,5 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         return false;
     }
 }
- 
+
 //Setup VIM: ex: et ts=4 enc=utf-8 :
