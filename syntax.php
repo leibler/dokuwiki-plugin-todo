@@ -191,20 +191,10 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     public function handle($match, $state, $pos, &$handler){
         switch ($state) {
           case DOKU_LEXER_ENTER :
-            #Search to see if the '#' is in the todo tag (if so, this means the Action has been completed)
-			$x = preg_match( '%<todo([^>]*)>%i', $match, $pregmatches );
+            #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
+			$x = preg_match( '%<todo([^>]*)>%i', $match, $tododata );
 			if( $x ) {
-				if( ($cPos = strpos( $pregmatches[1], '#' )) !== false ) {
-					// ok, # means this is checked
-					$handler->checked = true;
-				}
-				if( ($uPos = strpos( $pregmatches[1], '@' )) !== false ) {
-					$match2 = substr( $match, $uPos );
-					$x = preg_match( '%@([-.\w]+)%i', $match2, $pregmatches );
-					if( $x ) {
-						$handler->todo_user = $pregmatches[1];
-					}
-				}
+                list($handler->checked, $handler->todo_user) = $this->_parseTodoArgs($tododata[1]);
 			}
 			if( !is_numeric($handler->todo_index) ) {
 				$handler->todo_index = 0;
@@ -267,17 +257,18 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     * @see handle()
     */
     public function render($mode, &$renderer, $data) {
+        global $ID;
         list($state, $todotitle, $todoindex, $todouser, $checked) = $data;
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
             if($state == DOKU_LEXER_UNMATCHED) {
 
                 #Output our result
-                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked);
+                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $ID);
                 return true;
             }
 
-        } elseif($mode == 'meta') {
+        } elseif($mode == 'metadata') {
             /** @var $renderer Doku_Renderer_metadata */
             if($state == DOKU_LEXER_UNMATCHED) {
                 $id = $this->composePageid($todotitle);
@@ -308,21 +299,12 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
      */
 	public function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
-		if( $this->getConf("Strikethrough") == true ) {
-			$Strikethrough = 1;
-		} else {
-			$Strikethrough = 0;
-		}
-		if( $this->getConf("AllowLinks") == true ) {
-			$AllowLinks = 1;
-		} else {
-			$AllowLinks = 0;
-		}
+        $renderer->nocache();
 
 		$type = strtolower( $type );
 		switch( $type ) {
 			case 'wholeoutput':
-				// matches should hold an array with all <todo>matches</todo> or <todo #>matches</todo>
+				// $matches should hold an array with all <todo>matches</todo> or <todo #>matches</todo>
 				if( !is_array($matches) ) {
 					return false;
 				}
@@ -330,78 +312,27 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 				//file_put_contents( dirname(__FILE__).'/debug.txt', print_r($params,true), FILE_APPEND );
 				$renderer->doc .= '<div class="sp_main">';
 				$renderer->doc .= '<table class="inline sp_main_table">';	//create table
-				foreach( $matches as $page => $alltodos ) {
+
+				foreach( $matches as $page => $allTodosPerPage ) {
 					$renderer->doc .= '<tr class="sp_title"><th class="sp_title" colspan="2"><a href="'.wl($page).'">'.$page.'</a></td></tr>';
-					foreach( $alltodos as $k => $alltodos2 ) {
-						foreach( $alltodos2 as $index => $matchtodo ) {
-							$x = preg_match( '%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $matchtodo, $pregmatches );
-							$checked = false;
-							$todo_user = false;
+                    //entry 0 contains all whole matches
+						foreach( $allTodosPerPage[0] as $todoindex => $todomatch ) {
+							$x = preg_match( '%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $todomatch, $tododata );
+
 							if( $x ) {
-								if( strpos( $pregmatches[1], '#' ) !== false ) {
-									// ok, # means this is checked
-									$checked = true;
-								}
-								if( ($uPos = strpos( $pregmatches[1], '@' )) !== false ) {
-									$match2 = substr( $pregmatches[1], $uPos );
-									$x = preg_match( '%@([-.\w]+)%i', $match2, $pregusermatch );
-									if( $x ) {
-										$todo_user = $pregusermatch[1];
-									}
-								}
-								$match = $pregmatches[2];
-								$pregmatches[2] = trim($pregmatches[2]);
-								if( empty($pregmatches[2]) ) {
+                                list($checked, $todouser) = $this->_parseTodoArgs($tododata[1]);
+								$todotitle = trim($tododata[2]);
+								if( empty($todotitle) ) {
 									continue;
 								}
 								$renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
-								if( !empty($todo_user) ) {
-									$span = '<span class="todouser">['.htmlspecialchars($todo_user).']</span>';
-								} else {
-									$span = '';
-								}
-								if($this->getConf("CheckboxText") == true){
-									if($this->getConf("AllowLinks") == true) {
-										$span .= '<span class="todotext">';
-									} else {
-										$span .= '<span class="todotext todohlght" onclick="clickSpan(jQuery(this), \''.addslashes($page).'\', '.$Strikethrough.')">';
-									}
-								} else {
-									$span .= '<span class="todotext">';
-								}
-								// by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
-								// leo: but in case of integration with searchpattern there is no chance to find the element with the index
-								// because after setting one element to completed the next call will have other index counts in the backend 
-								// (1st call changed the backend file, in the frontend it's already loaded)
-								// Possible solution:
-								//   maybe we only should count the not checked checkboxes so this should be the same
-								//   database like the backend file
-								$begin = '<input type="checkbox" class="todocheckbox" onclick="todo(jQuery(this), \'' . addslashes($page) . '\', '.$Strikethrough.')" '.( $checked ? 'checked="checked" ': '' ).' /> ';
-								$begin .= $span;
-              
-								#Generate Hidden Field to Hold Original Title of Action
-								$begin .= "<input class=\"todohiddentext\" type=\"hidden\" value=\"" . urlencode($match) . "\" />";
-								$renderer->doc .= $begin;
-								if( $AllowLinks ) {
-									#Should we allow Strikethrough or not
-									if( $checked && $Strikethrough ){
-										$renderer->doc .= $this->_createLink( $renderer, $match, '<del>'.$match.'</del>' );
-									} else {
-										$renderer->doc .= $this->_createLink( $renderer, $match, $match );
-									}
-								} else {
-									#Should we allow Strikethrough or not
-									if( $checked && $Strikethrough ){
-										$renderer->doc .= '<span class="todoinnertext"><del>'.htmlspecialchars($match).'</del></span>';
-									} else {
-										$renderer->doc .= '<span class="todoinnertext">'.htmlspecialchars($match)."</span>";
-									}      
-								}
-								$renderer->doc .= '</span> <br />';
+
+                                // in case of integration with searchpattern there is no chance to find the index of an element
+                                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
+
 								$renderer->doc .= '</td></tr>';
 							}
 						}
-					}
 				}
 				$renderer->doc .= '</table>';	//end table
 				$renderer->doc .= '</div>';
@@ -432,20 +363,26 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     /**
      * @param Doku_Renderer_xhtml &$renderer
      * @param string               $todotitle Title of todoitem
-     * @param int                  $todoindex
+     * @param int                  $todoindex which number the todoitem has, null is when not at the page
      * @param string               $todouser  User assigned to todoitem
      * @param bool                 $checked   whether item is done
+     * @param string               $id of page
      * @return string html of an item
      */
-    private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked) {
+    private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
+        //set correct context
         global $ID;
+        $oldID = $ID;
+        $ID = $id;
+
         $jsargs = 'jQuery(this), \'' . addslashes($ID) . '\', '.($this->getConf("Strikethrough") ? '1' : '0');
 
-        $return = '<input type="checkbox" class="todocheckbox"
-                          data-index="'.$todoindex.'" data-date="'.hsc(@filemtime(wikiFN($ID))).'"
-                          onclick="todo('.$jsargs.')" '.($checked ? 'checked="checked"' : '').' /> ';
-		if($todouser) {
-            $return .= '<span class="todouser">['.hsc($todouser).']</span>';
+        $return = '<input type="checkbox" class="todocheckbox" onclick="todo(' . $jsargs . ')" '
+            . ($todoindex === null ? '' : 'data-index="' . $todoindex . '"' )
+            . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
+            . ($checked ? 'checked="checked"' : '') . ' /> ';
+        if($todouser) {
+            $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
 
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks")) {
@@ -475,6 +412,9 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         }
 
         $return .= '</span>';
+
+        //restore page ID
+        $ID = $oldID;
         return $return;
     }
 
@@ -511,6 +451,28 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         //resolve and build link
         $id = $actionNamespace . $pagename;
         return $id;
+    }
+
+    /**
+     * Parse the arguments of todotag
+     *
+     * @param string $todoargs
+     * @return array(bool, false|string) with checked and user
+     */
+    protected function _parseTodoArgs($todoargs) {
+        $checked = $todouser = false;
+
+        if(strpos($todoargs, '#') !== false) {
+            $checked = true;
+        }
+        if(($userStartPos = strpos($todoargs, '@')) !== false) {
+            $userraw = substr($todoargs, $userStartPos);
+            $x = preg_match('%@([-.\w]+)%i', $userraw, $usermatch);
+            if($x) {
+                $todouser = $usermatch[1];
+            }
+        }
+        return array($checked, $todouser);
     }
 }
  
