@@ -271,94 +271,34 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         } elseif($mode == 'metadata') {
             /** @var $renderer Doku_Renderer_metadata */
             if($state == DOKU_LEXER_UNMATCHED) {
-                $id = $this->composePageid($todotitle);
+                $id = $this->_composePageid($todotitle);
                 $renderer->internallink($id, $todotitle);
             }
         }
         return false;
     }
-	
-	/**
-     * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
-     * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-     * use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-     * this handler method uses the table and layout with css classes from searchpattern plugin
-     * @param $type    string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
-     *                wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
-     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
-     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
-     *                intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
-     * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
-     * @param array                $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
-     * @param array                $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
-     * @param string               $page     id of current page
-     * @param array                $params   the parameters set by searchpattern (see search pattern documentation)
-     * @param string               $value    value which should be outputted by searchpattern
-     * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
+
+    /**
+     * Parse the arguments of todotag
+     *
+     * @param string $todoargs
+     * @return array(bool, false|string) with checked and user
      */
-	public function _searchpatternHandler( $type, &$renderer, $data, $matches, $params=array(), $page=null, $value=null ) {
-        $renderer->nocache();
+    private function _parseTodoArgs($todoargs) {
+        $checked = $todouser = false;
 
-		$type = strtolower( $type );
-		switch( $type ) {
-			case 'wholeoutput':
-				// $matches should hold an array with all <todo>matches</todo> or <todo #>matches</todo>
-				if( !is_array($matches) ) {
-					return false;
-				}
-				//file_put_contents( dirname(__FILE__).'/debug.txt', print_r($matches,true), FILE_APPEND );
-				//file_put_contents( dirname(__FILE__).'/debug.txt', print_r($params,true), FILE_APPEND );
-				$renderer->doc .= '<div class="sp_main">';
-				$renderer->doc .= '<table class="inline sp_main_table">';	//create table
-
-				foreach( $matches as $page => $allTodosPerPage ) {
-					$renderer->doc .= '<tr class="sp_title"><th class="sp_title" colspan="2"><a href="'.wl($page).'">'.$page.'</a></td></tr>';
-                    //entry 0 contains all whole matches
-						foreach( $allTodosPerPage[0] as $todoindex => $todomatch ) {
-							$x = preg_match( '%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $todomatch, $tododata );
-
-							if( $x ) {
-                                list($checked, $todouser) = $this->_parseTodoArgs($tododata[1]);
-								$todotitle = trim($tododata[2]);
-								if( empty($todotitle) ) {
-									continue;
-								}
-								$renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
-
-                                // in case of integration with searchpattern there is no chance to find the index of an element
-                                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
-
-								$renderer->doc .= '</td></tr>';
-							}
-						}
-				}
-				$renderer->doc .= '</table>';	//end table
-				$renderer->doc .= '</div>';
-				// true means, that this handler method does the output (searchpattern plugin has nothing to do)
-				return true;
-				break;
-			case 'intable:whole':
-				break;
-			case 'intable:prefix':
-				//$renderer->doc .= '<b>Start on Page '.$page.'</b>';
-				break;
-			case 'intable:match':
-				//$renderer->doc .= 'regex match on page '.$page.': <pre>'.$value.'</pre>';
-				break;
-			case 'intable:count':
-				//$renderer->doc .= 'normal count on page '.$page.': <pre>'.$value.'</pre>';
-				break;
-			case 'intable:suffix':
-				//$renderer->doc .= '<b>End on Page '.$page.'</b>';
-				break;
-			default:
-				break;
-		}
-		// false means, that this handler method does not output anything. all should be done by searchpattern plugin
-		return false;
-	}
+        if(strpos($todoargs, '#') !== false) {
+            $checked = true;
+        }
+        if(($userStartPos = strpos($todoargs, '@')) !== false) {
+            $userraw = substr($todoargs, $userStartPos);
+            $x = preg_match('%@([-.\w]+)%i', $userraw, $usermatch);
+            if($x) {
+                $todouser = $usermatch[1];
+            }
+        }
+        return array($checked, $todouser);
+    }
 
     /**
      * @param Doku_Renderer_xhtml &$renderer
@@ -427,7 +367,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @return string
      */         
     private function _createLink(&$renderer, $pagename, $name = NULL){
-        $id = $this->composePageid($pagename);
+        $id = $this->_composePageid($pagename);
 
         return $renderer->internallink($id, $name, null, true);
     }
@@ -438,7 +378,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @param string $pagename
      * @return string page id
      */
-    private function composePageid($pagename) {
+    private function _composePageid($pagename) {
         #Get the ActionNamespace and make sure it ends with a : (if not, add it)
         $actionNamespace = $this->getConf("ActionNamespace");
         if(strlen($actionNamespace) == 0 || substr($actionNamespace, -1) != ':') {
@@ -453,26 +393,88 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         return $id;
     }
 
-    /**
-     * Parse the arguments of todotag
-     *
-     * @param string $todoargs
-     * @return array(bool, false|string) with checked and user
-     */
-    protected function _parseTodoArgs($todoargs) {
-        $checked = $todouser = false;
 
-        if(strpos($todoargs, '#') !== false) {
-            $checked = true;
+    /**
+     * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
+     * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * this handler method uses the table and layout with css classes from searchpattern plugin
+     *
+     * @param $type    string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
+     *                wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
+     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
+     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
+     *                intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+     *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
+     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
+     * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
+     * @param array                $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
+     * @param array                $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
+     * @param string               $page     id of current page
+     * @param array                $params   the parameters set by searchpattern (see search pattern documentation)
+     * @param string               $value    value which should be outputted by searchpattern
+     * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
+     */
+    public function _searchpatternHandler($type, &$renderer, $data, $matches, $params = array(), $page = null, $value = null) {
+        $renderer->nocache();
+
+        $type = strtolower($type);
+        switch($type) {
+            case 'wholeoutput':
+                // $matches should hold an array with all <todo>matches</todo> or <todo #>matches</todo>
+                if(!is_array($matches)) {
+                    return false;
+                }
+                //file_put_contents( dirname(__FILE__).'/debug.txt', print_r($matches,true), FILE_APPEND );
+                //file_put_contents( dirname(__FILE__).'/debug.txt', print_r($params,true), FILE_APPEND );
+                $renderer->doc .= '<div class="sp_main">';
+                $renderer->doc .= '<table class="inline sp_main_table">'; //create table
+
+                foreach($matches as $page => $allTodosPerPage) {
+                    $renderer->doc .= '<tr class="sp_title"><th class="sp_title" colspan="2"><a href="' . wl($page) . '">' . $page . '</a></td></tr>';
+                    //entry 0 contains all whole matches
+                    foreach($allTodosPerPage[0] as $todoindex => $todomatch) {
+                        $x = preg_match('%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $todomatch, $tododata);
+
+                        if($x) {
+                            list($checked, $todouser) = $this->_parseTodoArgs($tododata[1]);
+                            $todotitle = trim($tododata[2]);
+                            if(empty($todotitle)) {
+                                continue;
+                            }
+                            $renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
+
+                            // in case of integration with searchpattern there is no chance to find the index of an element
+                            $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
+
+                            $renderer->doc .= '</td></tr>';
+                        }
+                    }
+                }
+                $renderer->doc .= '</table>'; //end table
+                $renderer->doc .= '</div>';
+                // true means, that this handler method does the output (searchpattern plugin has nothing to do)
+                return true;
+                break;
+            case 'intable:whole':
+                break;
+            case 'intable:prefix':
+                //$renderer->doc .= '<b>Start on Page '.$page.'</b>';
+                break;
+            case 'intable:match':
+                //$renderer->doc .= 'regex match on page '.$page.': <pre>'.$value.'</pre>';
+                break;
+            case 'intable:count':
+                //$renderer->doc .= 'normal count on page '.$page.': <pre>'.$value.'</pre>';
+                break;
+            case 'intable:suffix':
+                //$renderer->doc .= '<b>End on Page '.$page.'</b>';
+                break;
+            default:
+                break;
         }
-        if(($userStartPos = strpos($todoargs, '@')) !== false) {
-            $userraw = substr($todoargs, $userStartPos);
-            $x = preg_match('%@([-.\w]+)%i', $userraw, $usermatch);
-            if($x) {
-                $todouser = $usermatch[1];
-            }
-        }
-        return array($checked, $todouser);
+        // false means, that this handler method does not output anything. all should be done by searchpattern plugin
+        return false;
     }
 }
  
