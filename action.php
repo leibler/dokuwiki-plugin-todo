@@ -120,7 +120,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             $index++;
             // index is only set on the current page with the todos
             // the occurances are counted, untill the index-th input is reached which is updated
-            $todoTagStartPos = strnpos($wikitext, '<todo', $index);
+            $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
             $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
 
             if($todoTagEndPos > $todoTagStartPos) {
@@ -176,27 +176,9 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
     }
 
     /**
-     * @brief Convert a string to a regex so it can be used in PHP "preg_match" function
-     * from dokuwiki searchpattern plugin
-     */
-    private function _todoStr2regex($str) {
-        $regex = ''; //init
-        for($i = 0; $i < strlen($str); $i++) { //for each char in the string
-            if(!ctype_alnum($str[$i])) { //if char is not alpha-numeric
-                $regex = $regex . '\\'; //escape it with a backslash
-            }
-            $regex = $regex . $str[$i]; //compose regex
-        }
-        return $regex; //return
-    }
-
-}
-
-if(!function_exists('strnpos')) {
-    /**
      * Find position of $occurance-th $needle in haystack
      */
-    function strnpos($haystack, $needle, $occurance, $pos = 0) {
+    private function _strnpos($haystack, $needle, $occurance, $pos = 0) {
         for($i = 1; $i <= $occurance; $i++) {
             $pos = strpos($haystack, $needle, $pos) + 1;
         }
