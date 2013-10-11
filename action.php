@@ -134,7 +134,10 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
                 saveWikiText($ID, $wikitext, 'Checkbox Change', $minoredit = true);
                 unlock($ID);
 
-                $return = array('date' => @filemtime(wikiFN($ID)));
+                $return = array(
+                    'date' => @filemtime(wikiFN($ID)),
+                    'succeed' => true
+                );
                 $this->printJson($return);
             }
         }

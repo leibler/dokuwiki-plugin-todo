@@ -16,11 +16,23 @@
  */
 
 /**
+ * html-layout:
+ *
+ * +input[checkbox].todocheckbox
+ * +span.todotext
+ * -del
+ * --span.todoinnertext
+ * ---anchor with text or text only
+ */
+
+/**
  * lock to prevent simultanous requests
  */
 var todoplugin_locked = { clickspan: false, todo: false };
+
 /**
  * @brief onclick method for span element
+ *
  * @param {jQuery} $span  the jQuery span element
  * @param {string} id     the page
  * @param {int}    strike strikethrough activated (1) or not (0) - see config option Strikethrough
@@ -30,23 +42,15 @@ function clickSpan($span, id, strike) {
     if (todoplugin_locked.clickspan || todoplugin_locked.todo) {
         return;
     }
+    //set lock
     todoplugin_locked.clickspan = true;
 
     //Find the checkbox node we need
-    var $chk;
-    //var $preve = jQuery(span).prev();
-    var $preve = $span.prev();
-    while ($preve) {
-        if ($preve.is("input")) {
-            $chk = $preve;
-            break;
-        }
-        $preve = $preve.prev();
-    }
+    var $chk = $span.prevAll('input.todocheckbox:first');
+
     if ($chk.is("input")) {
-        $chk.attr('checked', !$chk.is(':checked'));
+        $chk.prop('checked', !$chk.is(':checked'));
         todo($chk, id, strike);
-        //chk.checked = !chk.checked;
     } else {
         alert("Appropriate javascript element not found.");
     }
@@ -55,44 +59,29 @@ function clickSpan($span, id, strike) {
 
 /**
  * @brief onclick method for input element
+ *
  * @param {jQuery} $chk    the jQuery input element
  * @param {string} path    the page
  * @param {int}    strike  strikethrough activated (1) or not (0) - see config option Strikethrough
  */
-function todo($chk, path, strike) {
+function todo($chk) {
     //skip when locked
     if (todoplugin_locked.todo) {
         return;
     }
+    //set lock
     todoplugin_locked.todo = true;
 
-    /**
-     * +input[checkbox]
-     * +span.todotext
-     * -del
-     * --span.todoinnertext
-     * ---anchor with text or text only
-     */
 
-    var $spanTodoinnertext = $chk.nextAll("span.todotext").first().find("span.todoinnertext"),
-        index = $chk.data('index'),
-        checked = $chk.is(':checked'),
-        date = $chk.data('date');
+
+    var $spanTodoinnertext = $chk.nextAll("span.todotext:first").find("span.todoinnertext"),
+        param = $chk.data(), // contains: index, pageid, date, strikethrough
+        checked = !$chk.is(':checked');
 
     // if the data-index attribute is set, this is a call from the page where the todos are defined
-    // otherwise this is a call from searchpattern dokuwiki plugin rendered page
-    if (index === undefined) index = -1;
+    if (param.index === undefined) param.index = -1;
 
-    if ($spanTodoinnertext[0]) {
-        if (checked) {
-            if (strike && !$spanTodoinnertext.parent().is("del")) {
-                $spanTodoinnertext.wrap("<del></del>");
-            }
-        } else {
-            if ($spanTodoinnertext.parent().is("del")) {
-                $spanTodoinnertext.unwrap();
-            }
-        }
+    if ($spanTodoinnertext.length) {
 
         var whenCompleted = function (data) {
             //update date after edit and show alert when needed
@@ -102,6 +91,22 @@ function todo($chk, path, strike) {
             if (data.message) {
                 alert(data.message);
             }
+            //apply styling, or undo checking checkbox
+            if (data.succeed) {
+                $chk.prop('checked', checked);
+
+                if (checked) {
+                    if (param.strikethrough && !$spanTodoinnertext.parent().is("del")) {
+                        $spanTodoinnertext.wrap("<del></del>");
+                    }
+                } else {
+                    if ($spanTodoinnertext.parent().is("del")) {
+                        $spanTodoinnertext.unwrap();
+                    }
+                }
+            }
+
+            //release lock
             todoplugin_locked = { clickspan: false, todo: false };
         };
 
@@ -109,10 +114,10 @@ function todo($chk, path, strike) {
             DOKU_BASE + 'lib/exe/ajax.php',
             {
                 call: 'plugin_todo',
-                index: index,
-                path: path,
+                index: param.index,
+                path: param.pageid,
                 checked: checked ? "1" : "0",
-                date: date
+                date: param.date
             },
             whenCompleted,
             'json'
@@ -122,3 +127,27 @@ function todo($chk, path, strike) {
     }
 
 }
+
+jQuery(function(){
+
+    // add handler to checkbox
+    jQuery('input.todocheckbox').click(function(e){
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $this = jQuery(this);
+        // undo checking the checkbox
+        $this.prop('checked', !$this.is(':checked'));
+
+        todo($this);
+    });
+
+    // add click handler to todotext spans when marked with 'clickabletodo'
+    jQuery('span.todotext.clickabletodo').click(function(){
+        //Find the checkbox node we need
+        var $chk = jQuery(this).prevAll('input.todocheckbox:first');
+
+        todo($chk);
+    });
+
+});

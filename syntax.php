@@ -311,22 +311,22 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
         $oldID = $ID;
         $ID = $id;
 
-        $jsargs = 'jQuery(this), \'' . addslashes($ID) . '\', ' . ($this->getConf("Strikethrough") ? '1' : '0');
 
-        $return = '<input type="checkbox" class="todocheckbox" onclick="todo(' . $jsargs . ')" '
-            . ($todoindex === null ? '' : 'data-index="' . $todoindex . '"')
+        $return = '<input type="checkbox" class="todocheckbox"'
+            . ' data-index="' . $todoindex . '"'
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
+            . ' data-pageid="' . hsc($ID) . '"'
+            . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
             . ($checked ? 'checked="checked"' : '') . ' /> ';
         if($todouser) {
             $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
 
+        $spanclass = 'todotext';
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks")) {
-            $clickabletext = ' todohlght" onclick="clickSpan(' . $jsargs . ')';
-        } else {
-            $clickabletext = '';
+            $spanclass .= ' clickabletodo todohlght';
         }
-        $return .= '<span class="todotext' . $clickabletext . '">';
+        $return .= '<span class="' . $spanclass . '">';
 
         if($checked && $this->getConf("Strikethrough")) {
             $return .= '<del>';
