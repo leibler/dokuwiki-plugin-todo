@@ -80,7 +80,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         #Variables
         // by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
 
-        if(isset($_REQUEST['index'], $_REQUEST['checked'], $_REQUEST['path'])) {
+        if(isset($_REQUEST['index'], $_REQUEST['checked'], $_REQUEST['pageid'])) {
             // index = position of occurrence of <input> element (starting with 0 for first element)
             $index = (int) $_REQUEST['index'];
             // checked = flag if input is checked means to do is complete (1) or not (0)
