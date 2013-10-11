@@ -68,7 +68,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @param mixed $param not defined
      */
     public function _ajax_call(&$event, $param) {
-        global $ID;
+        global $ID, $conf, $lang;
 
         if($event->data !== 'plugin_todo') {
             return;
@@ -103,12 +103,20 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         }
         // Check, if page is locked
         if(checklock($ID)) {
-            $this->printJson(array('message' => 'The page is currently locked.'));
+            $locktime = filemtime(wikiLockFN($ID));
+            $expire = dformat($locktime + $conf['locktime']);
+            $min = round(($conf['locktime'] - (time() - $locktime)) / 60);
+
+            $msg = $this->getLang('lockedpage').'
+'.$lang['lockedby'] . ': ' . editorinfo($INFO['locked']) . '
+' . $lang['lockexpire'] . ': ' . $expire . ' (' . $min . ' min)';
+            $this->printJson(array('message' => $msg));
+            return;
         }
 
         //conflict check
         if($date != 0 && $INFO['meta']['date']['modified'] > $date) {
-            $this->printJson(array('message' => 'A newer version of this page is available, refresh your page before trying again.'));
+            $this->printJson(array('message' => $this->getLang('refreshpage')));
             return;
         }
 
