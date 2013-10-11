@@ -139,7 +139,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
                 // save Update (Minor)
                 lock($ID);
-                saveWikiText($ID, $wikitext, 'Checkbox Change', $minoredit = true);
+                saveWikiText($ID, $wikitext, $this->getLang('checkboxchange'), $minoredit = true);
                 unlock($ID);
 
                 $return = array(
