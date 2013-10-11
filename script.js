@@ -91,7 +91,7 @@ var ToDoPlugin = {
                 {
                     call: 'plugin_todo',
                     index: param.index,
-                    path: param.pageid,
+                    pageid: param.pageid,
                     checked: checked ? "1" : "0",
                     date: param.date
                 },

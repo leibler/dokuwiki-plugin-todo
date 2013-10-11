@@ -85,8 +85,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             $index = (int) $_REQUEST['index'];
             // checked = flag if input is checked means to do is complete (1) or not (0)
             $checked = (boolean) urldecode($_REQUEST['checked']);
-            // path = page ID (name)
-            $ID = cleanID(urldecode($_REQUEST['path']));
+            // path = page ID
+            $ID = cleanID(urldecode($_REQUEST['pageid']));
         } else {
             return;
         }
