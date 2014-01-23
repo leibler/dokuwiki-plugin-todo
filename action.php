@@ -20,7 +20,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
     /**
      * Register the eventhandlers
      */
-    public function register(&$controller) {
+    public function register(Doku_Event_Handler $controller) {
         $controller->register_hook('TOOLBAR_DEFINE', 'AFTER', $this, 'insert_button', array());
         $controller->register_hook('AJAX_CALL_UNKNOWN', 'BEFORE', $this, '_ajax_call', array());
     }
