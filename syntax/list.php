@@ -11,17 +11,7 @@ if(!defined('DOKU_INC')) die();
 /**
  * Class syntax_plugin_todo_list
  */
-class syntax_plugin_todo_list extends DokuWiki_Syntax_Plugin {
-
-    /** @var  syntax_plugin_todo_todo */
-    protected $todo;
-
-    /**
-     * constructor
-     */
-    public function __construct() {
-        $this->todo = new syntax_plugin_todo_todo();
-    }
+class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
     /**
      * @return string Syntax mode type
@@ -181,7 +171,7 @@ class syntax_plugin_todo_list extends DokuWiki_Syntax_Plugin {
         foreach($todopages as $page) {
             $todos = array();
             foreach($page['matches'][0] as $todoindex => $todomatches) {
-                list($checked, $todouser) = $this->todo->_parseTodoArgs($page['matches'][1][$todoindex]);
+                list($checked, $todouser) = $this->parseTodoArgs($page['matches'][1][$todoindex]);
                 $todotitle = trim($page['matches'][2][$todoindex]);
 
                 if(
@@ -223,7 +213,7 @@ class syntax_plugin_todo_list extends DokuWiki_Syntax_Plugin {
             foreach($page['todos'] as $todo) {
                 $R->tablerow_open();
                 $R->tablecell_open();
-                $R->doc .= $this->todo->_createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id']);
+                $R->doc .= $this->createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id']);
                 $R->tablecell_close();
                 $R->tablerow_close();
             }
