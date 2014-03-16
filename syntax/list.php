@@ -76,7 +76,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                         break;
                     }
                     //assigned?
-                    $data['assigned'] = explode(',', $value); //TODO check escaping
+                    $data['assigned'] = explode(',', $value);
                     $data['assigned'] = array_map(
                         function ($user) {
                             return ltrim($user, '@');
@@ -108,9 +108,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         // search(&$data, $base,            $func,                       $opts,$dir='',$lvl=1,$sort='natural')
         search($todopages, $conf['datadir'], array($this, 'search_todos'), $opts); //browse wiki pages with callback to search_pattern
 
-        $todopages = $this->_filterpages($todopages, $data);
+        $todopages = $this->filterpages($todopages, $data);
 
-        $this->_htmlTodoTable($renderer, $todopages);
+        $this->htmlTodoTable($renderer, $todopages);
 
         return true;
     }
@@ -166,12 +166,13 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param $data      array listing parameters
      * @return array filtered pages
      */
-    private function _filterpages($todopages, $data) {
+    private function filterpages($todopages, $data) {
         $pages = array();
         foreach($todopages as $page) {
             $todos = array();
-            foreach($page['matches'][0] as $todoindex => $todomatches) {
-                list($checked, $todouser) = $this->parseTodoArgs($page['matches'][1][$todoindex]);
+            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+            foreach($page['matches'][1] as $todoindex => $todomatch) {
+                list($checked, $todouser) = $this->parseTodoArgs($todomatch);
                 $todotitle = trim($page['matches'][2][$todoindex]);
 
                 if(
@@ -202,7 +203,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param Doku_Renderer_xhtml $R
      * @param array $todopages
      */
-    private function _htmlTodoTable($R, $todopages) {
+    private function htmlTodoTable($R, $todopages) {
         $R->table_open();
         foreach($todopages as $page) {
             $R->tablerow_open();
