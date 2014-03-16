@@ -86,7 +86,7 @@ if(!defined('DOKU_INC')) die();
  * All DokuWiki plugins to extend the parser/rendering mechanism
  * need to inherit from this class
  */
-class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
+class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * Get the type of syntax this plugin defines.
@@ -150,11 +150,11 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @see render()
      */
     public function connectTo($mode) {
-        $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo');
+        $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo_todo');
     }
 
     public function postConnect() {
-        $this->Lexer->addExitPattern('</todo>', 'plugin_todo');
+        $this->Lexer->addExitPattern('</todo>', 'plugin_todo_todo');
     }
 
     /**
@@ -280,7 +280,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @param string $todoargs
      * @return array(bool, false|string) with checked and user
      */
-    private function _parseTodoArgs($todoargs) {
+    public function _parseTodoArgs($todoargs) {
         $checked = $todouser = false;
 
         if(strpos($todoargs, '#') !== false) {
@@ -305,7 +305,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @param string $id of page
      * @return string html of an item
      */
-    private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
+    public function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
         //set correct context
         global $ID;
         $oldID = $ID;
@@ -388,17 +388,25 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
-     * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-     * use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for open todos:
+     *          ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for completed todos:
+     *          ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
      * this handler method uses the table and layout with css classes from searchpattern plugin
      *
-     * @param $type    string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
+     * @param $type   string type of the request from searchpattern plugin
+     *                (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
      *                wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
-     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
-     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
-     *                intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
+     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side
+     *                                  of the table will be done by THIS plugin
+     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and
+     *                                  searchpattern will continue it's default output
+     *                intable:match   = if regex, right side of table - THIS plugin will format the current
+     *                                  outputvalue ($value) and output it instead of searchpattern
+     *                intable:count   = if normal, right side of table - THIS plugin will format the current
+     *                                  outputvalue ($value) and output it instead of searchpattern
+     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and
+     *                                  searchpattern will continue it's default output
      * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
      * @param array $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
      * @param array $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
