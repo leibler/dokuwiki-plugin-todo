@@ -1,6 +1,6 @@
 <?php
 /**
- * DokuWiki Plugin todo (Syntax Component)
+ * DokuWiki Plugin todo_list (Syntax Component)
  *
  * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
  */
@@ -44,7 +44,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     }
 
     /**
-     * Handle matches of the todo syntax
+     * Handle matches of the todolist syntax
      *
      * @param string $match The match of the syntax
      * @param int $state The state of the handler
@@ -58,8 +58,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $options = explode(' ', $options);
         $data = array(
             'completed' => 'all',
-            'assigned' => 'all',
-            'pos' => $pos
+            'assigned' => 'all'
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
@@ -79,6 +78,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     $data['assigned'] = explode(',', $value);
                     $data['assigned'] = array_map(
                         function ($user) {
+                            //placeholder
+                            if($user == '@@USER@@') {
+                                return $user;
+                            }
+                            //user
                             return ltrim($user, '@');
                         }, $data['assigned']
                     );
@@ -175,18 +179,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 list($checked, $todouser) = $this->parseTodoArgs($todomatch);
                 $todotitle = trim($page['matches'][2][$todoindex]);
 
-                if(
-                    (
-                        //completed?
-                        $data['completed'] === 'all'
-                        OR $data['completed'] === $checked //yes or no
-                    ) AND (
-                        //assigned?
-                        $data['assigned'] === 'all'
-                        OR (is_bool($data['assigned']) && $data['assigned'] == $todouser) //yes or no
-                        OR (is_array($data['assigned']) && in_array($todouser, $data['assigned'])) //one of requested users?
-                    )
-                ) {
+                if($this->isRequestedTodo($data, $checked, $todouser)) {
                     $todos[] = array($todotitle, $todoindex, $todouser, $checked);
                 }
             }
@@ -220,5 +213,39 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
         }
         $R->table_close();
+    }
+
+    /**
+     * Check the conditions for adding a todoitem
+     *
+     * @param $data     array the defined filters
+     * @param $checked  bool completion status of task; true: finished, false: open
+     * @param $todouser string user username of user
+     * @return bool if the todoitem should be listed
+     */
+    private function isRequestedTodo($data, $checked, $todouser) {
+        //completion status
+        $condition1 = $data['completed'] === 'all' //all
+                      || $data['completed'] === $checked; //yes or no
+
+        // resolve placeholder in assignees
+        $requestedassignees = array();
+        if(is_array($data['assigned'])) {
+            $requestedassignees = array_map(
+                function($user) {
+                    if($user == '@@USER@@' && !empty($_SERVER['REMOTE_USER'])) {  //$INPUT->server->str('REMOTE_USER')
+                            return $_SERVER['REMOTE_USER'];
+                    }
+                    return $user;
+                },
+                $data['assigned']
+            );
+        }
+        //assigned
+        $condition2 =   $data['assigned'] === 'all' //all
+                        || (is_bool($data['assigned']) && $data['assigned'] == $todouser) //yes or no
+                        || (is_array($data['assigned']) && in_array($todouser, $requestedassignees)); //one of the requested users?
+
+        return $condition1 AND $condition2;
     }
 }
