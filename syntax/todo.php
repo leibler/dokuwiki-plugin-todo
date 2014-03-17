@@ -86,56 +86,32 @@ if(!defined('DOKU_INC')) die();
  * All DokuWiki plugins to extend the parser/rendering mechanism
  * need to inherit from this class
  */
-class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
+class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * Get the type of syntax this plugin defines.
      *
-     * @param none
-     * @return String <tt>'substition'</tt> (i.e. 'substitution').
-     * @public
-     * @static
+     * @return String
      */
     public function getType() {
         return 'substition';
     }
 
     /**
-     * What kind of syntax do we allow (optional)
-     */
-//    function getAllowedTypes() {
-    //return array('formatting', 'substition', 'disabled');;
-//    }
-
-    /**
-     * Define how this plugin is handled regarding paragraphs.
+     * Paragraph Type
      *
-     * <p>
-     * This method is important for correct XHTML nesting. It returns
-     * one of the following values:
-     * </p>
-     * <dl>
-     * <dt>normal</dt><dd>The plugin can be used inside paragraphs.</dd>
-     * <dt>block</dt><dd>Open paragraphs need to be closed before
-     * plugin output.</dd>
-     * <dt>stack</dt><dd>Special case: Plugin wraps other paragraphs.</dd>
-     * </dl>
-     * @param none
-     * @return String <tt>'block'</tt>.
-     * @public
-     * @static
+     * 'normal' - The plugin can be used inside paragraphs
+     * 'block'  - Open paragraphs need to be closed before plugin output
+     * 'stack'  - Special case. Plugin wraps other paragraphs.
      */
-//    function getPType(){
-//        return 'normal';
-//    }
+    function getPType(){
+        return 'normal';
+    }
 
     /**
      * Where to sort in?
      *
-     * @param none
-     * @return Integer <tt>6</tt>.
-     * @public
-     * @static
+     * @return Integer
      */
     public function getSort() {
         return 999;
@@ -146,45 +122,24 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      *
      * @param $mode String The desired rendermode.
      * @return void
-     * @public
      * @see render()
      */
     public function connectTo($mode) {
-        $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo');
+        $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo_todo');
     }
 
     public function postConnect() {
-        $this->Lexer->addExitPattern('</todo>', 'plugin_todo');
+        $this->Lexer->addExitPattern('</todo>', 'plugin_todo_todo');
     }
 
     /**
      * Handler to prepare matched data for the rendering process.
      *
-     * <p>
-     * The <tt>$aState</tt> parameter gives the type of pattern
-     * which triggered the call to this method:
-     * </p>
-     * <dl>
-     * <dt>DOKU_LEXER_ENTER</dt>
-     * <dd>a pattern set by <tt>addEntryPattern()</tt></dd>
-     * <dt>DOKU_LEXER_MATCHED</dt>
-     * <dd>a pattern set by <tt>addPattern()</tt></dd>
-     * <dt>DOKU_LEXER_EXIT</dt>
-     * <dd> a pattern set by <tt>addExitPattern()</tt></dd>
-     * <dt>DOKU_LEXER_SPECIAL</dt>
-     * <dd>a pattern set by <tt>addSpecialPattern()</tt></dd>
-     * <dt>DOKU_LEXER_UNMATCHED</dt>
-     * <dd>ordinary text encountered within the plugin's syntax mode
-     * which doesn't match any pattern.</dd>
-     * </dl>
      * @param $match    string  The text matched by the patterns.
      * @param $state    int     The lexer state for the match.
      * @param $pos      int     The character position of the matched text.
      * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
      * @return int The current lexer state for the match.
-     * @public
-     * @see render()
-     * @static
      */
     public function handle($match, $state, $pos, Doku_Handler &$handler) {
         switch($state) {
@@ -192,7 +147,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
                 #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
                 $x = preg_match('%<todo([^>]*)>%i', $match, $tododata);
                 if($x) {
-                    list($handler->checked, $handler->todo_user) = $this->_parseTodoArgs($tododata[1]);
+                    list($handler->checked, $handler->todo_user) = $this->parseTodoArgs($tododata[1]);
                 }
                 if(!is_numeric($handler->todo_index)) {
                     $handler->todo_index = 0;
@@ -236,21 +191,10 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     /**
      * Handle the actual output creation.
      *
-     * <p>
-     * The method checks for the given <tt>$aFormat</tt> and returns
-     * <tt>FALSE</tt> when a format isn't supported. <tt>$aRenderer</tt>
-     * contains a reference to the renderer object which is currently
-     * handling the rendering. The contents of <tt>$aData</tt> is the
-     * return value of the <tt>handle()</tt> method.
-     * </p>
      * @param  $mode     String        The output format to generate.
      * @param &$renderer Doku_Renderer A reference to the renderer object.
      * @param  $data     Array         The data created by the <tt>handle()</tt> method.
-     * @return Boolean
-     * <tt>TRUE</tt> if rendered successfully, or
-     * <tt>FALSE</tt> otherwise.
-     * @public
-     * @see handle()
+     * @return Boolean true: if rendered successfully, or false: otherwise.
      */
     public function render($mode, Doku_Renderer &$renderer, $data) {
         global $ID;
@@ -260,7 +204,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
             if($state == DOKU_LEXER_UNMATCHED) {
 
                 #Output our result
-                $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $ID);
+                $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $ID);
                 return true;
             }
 
@@ -280,7 +224,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
      * @param string $todoargs
      * @return array(bool, false|string) with checked and user
      */
-    private function _parseTodoArgs($todoargs) {
+    protected function parseTodoArgs($todoargs) {
         $checked = $todouser = false;
 
         if(strpos($todoargs, '#') !== false) {
@@ -299,13 +243,13 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
     /**
      * @param Doku_Renderer_xhtml &$renderer
      * @param string $todotitle Title of todoitem
-     * @param int $todoindex which number the todoitem has, null is when not at the page
+     * @param int    $todoindex which number the todoitem has, null is when not at the page
      * @param string $todouser  User assigned to todoitem
-     * @param bool $checked   whether item is done
+     * @param bool   $checked   whether item is done
      * @param string $id of page
      * @return string html of an item
      */
-    private function _createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
+    protected function createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
         //set correct context
         global $ID;
         $oldID = $ID;
@@ -388,17 +332,25 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * @brief this function can be called by dokuwiki plugin searchpattern to process the todos found by searchpattern.
-     * use this searchpattern expression for open todos: ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
-     * use this searchpattern expression for completed todos: ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for open todos:
+     *          ~~SEARCHPATTERN#'/<todo[^#>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
+     * use this searchpattern expression for completed todos:
+     *          ~~SEARCHPATTERN#'/<todo[^#>]*#[^>]*>.*?<\/todo[\W]*?>/'?? _ToDo ??~~
      * this handler method uses the table and layout with css classes from searchpattern plugin
      *
-     * @param $type    string type of the request from searchpattern plugin (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
+     * @param $type   string type of the request from searchpattern plugin
+     *                (wholeoutput, intable:whole, intable:prefix, intable:match, intable:count, intable:suffix)
      *                wholeoutput     = all output is done by THIS plugin (no output will be done by search pattern)
-     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side of the table will be done by THIS plugin
-     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and searchpattern will continue it's default output
-     *                intable:match   = if regex, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:count   = if normal, right side of table - THIS plugin will format the current outputvalue ($value) and output it instead of searchpattern
-     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and searchpattern will continue it's default output
+     *                intable:whole   = the left side of table (page name) is done by searchpattern, the right side
+     *                                  of the table will be done by THIS plugin
+     *                intable:prefix  = on the right side of table - THIS plugin will output a prefix header and
+     *                                  searchpattern will continue it's default output
+     *                intable:match   = if regex, right side of table - THIS plugin will format the current
+     *                                  outputvalue ($value) and output it instead of searchpattern
+     *                intable:count   = if normal, right side of table - THIS plugin will format the current
+     *                                  outputvalue ($value) and output it instead of searchpattern
+     *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and
+     *                                  searchpattern will continue it's default output
      * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
      * @param array $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
      * @param array $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
@@ -429,7 +381,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
                         $x = preg_match('%<todo([^>]*)>(.*)</[\W]*todo[\W]*>%i', $todomatch, $tododata);
 
                         if($x) {
-                            list($checked, $todouser) = $this->_parseTodoArgs($tododata[1]);
+                            list($checked, $todouser) = $this->parseTodoArgs($tododata[1]);
                             $todotitle = trim($tododata[2]);
                             if(empty($todotitle)) {
                                 continue;
@@ -437,7 +389,7 @@ class syntax_plugin_todo extends DokuWiki_Syntax_Plugin {
                             $renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
 
                             // in case of integration with searchpattern there is no chance to find the index of an element
-                            $renderer->doc .= $this->_createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
+                            $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
 
                             $renderer->doc .= '</td></tr>';
                         }
