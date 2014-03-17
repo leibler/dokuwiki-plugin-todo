@@ -78,12 +78,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     $data['assigned'] = explode(',', $value);
 					// @date 20140317 le: if check for logged in user, also check for logged in user email address
 					if( in_array( '@@USER@@', $data['assigned'] ) ) {
-						$data['assigned'][] = '@@USER-MAIL@@';
+						$data['assigned'][] = '@@MAIL@@';
 					}
                     $data['assigned'] = array_map(
                         function ($user) {
-                            //placeholder
-                            if( $user == '@@USER@@' || $user == '@@USER-MAIL@@' ) {
+                            //placeholder (inspired by replacement-patterns - see https://www.dokuwiki.org/namespace_templates#replacement_patterns)
+                            if( $user == '@@USER@@' || $user == '@@MAIL@@' ) {
                                 return $user;
                             }
                             //user
@@ -243,7 +243,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                             return $_SERVER['REMOTE_USER'];
                     }
 					// @date 20140317 le: check for logged in user email address
-					if( $user == '@@USER-MAIL@@' && isset( $USERINFO['mail'] ) ) {  
+					if( $user == '@@MAIL@@' && isset( $USERINFO['mail'] ) ) {  
 							return $USERINFO['mail'];
 					}
                     return $user;
