@@ -76,10 +76,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     }
                     //assigned?
                     $data['assigned'] = explode(',', $value);
+					// @date 20140317 le: if check for logged in user, also check for logged in user email address
+					if( in_array( '@@USER@@', $data['assigned'] ) ) {
+						$data['assigned'][] = '@@USER-MAIL@@';
+					}
                     $data['assigned'] = array_map(
                         function ($user) {
                             //placeholder
-                            if($user == '@@USER@@') {
+                            if( $user == '@@USER@@' || $user == '@@USER-MAIL@@' ) {
                                 return $user;
                             }
                             //user
@@ -224,6 +228,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @return bool if the todoitem should be listed
      */
     private function isRequestedTodo($data, $checked, $todouser) {
+
         //completion status
         $condition1 = $data['completed'] === 'all' //all
                       || $data['completed'] === $checked; //yes or no
@@ -233,9 +238,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         if(is_array($data['assigned'])) {
             $requestedassignees = array_map(
                 function($user) {
+					global $USERINFO;
                     if($user == '@@USER@@' && !empty($_SERVER['REMOTE_USER'])) {  //$INPUT->server->str('REMOTE_USER')
                             return $_SERVER['REMOTE_USER'];
                     }
+					// @date 20140317 le: check for logged in user email address
+					if( $user == '@@USER-MAIL@@' && isset( $USERINFO['mail'] ) ) {  
+							return $USERINFO['mail'];
+					}
                     return $user;
                 },
                 $data['assigned']

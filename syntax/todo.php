@@ -232,7 +232,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
         if(($userStartPos = strpos($todoargs, '@')) !== false) {
             $userraw = substr($todoargs, $userStartPos);
-            $x = preg_match('%@([-.\w]+)%i', $userraw, $usermatch);
+			// @date 20140317 le: add support for email addresses
+            $x = preg_match('%@([-.\w@]+)%i', $userraw, $usermatch);
             if($x) {
                 $todouser = $usermatch[1];
             }

@@ -179,7 +179,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         if($x) {
             if(($userPos = strpos($matches[1], '@')) !== false) {
                 $submatch = substr($todoTag, $userPos);
-                $x = preg_match('%@([-.\w]+)%i', $submatch, $matchinguser);
+				// @date 20140317 le: add support for email addresses
+                $x = preg_match('%@([-.\w@]+)%i', $submatch, $matchinguser);
                 if($x) {
                     $newTag .= ' @' . $matchinguser[1];
                 }
