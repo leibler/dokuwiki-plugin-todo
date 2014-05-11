@@ -66,7 +66,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
-            switch($key) {                case 'header': // how should the header be rendered?
+            switch($key) {
+            	case 'header': // how should the header be rendered?
                     if(in_array($value, array('id', 'firstheader'))) {
                         $data['header'] = $value;
                     }
