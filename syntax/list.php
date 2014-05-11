@@ -56,7 +56,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
-        $data = array((
+        $data = array(
             'header' => 'id',
             'completed' => 'all',
             'assigned' => 'all',
