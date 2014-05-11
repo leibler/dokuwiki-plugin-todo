@@ -9,5 +9,8 @@ $lang['AllowLinks'] = 'Allow actions to also link to pages with the same name?';
 $lang['ActionNamespace'] = 'What namespace should your actions be created in (".:" = Current NS, Blank = Root NS)';
 $lang['Strikethrough'] = 'Should the actions have strikethrough applied when checked?';
 $lang['CheckboxText'] = 'If AllowLinks is disabled, should clicking the actions\' text mark the action complete?';
+$lang['Checkbox'] = 'Should the CheckBox be rendered in a list view?';
+$lang['Header'] = 'How should the header of a list be named? As "id" or as the first header of the page "firstheader".';
+$lang['Username'] = 'How should the name of the assigned user be rendered? As "username", full name "real" oder not at all "none"';
 
 //Setup VIM: ex: et ts=2 enc=utf-8 :
