@@ -400,7 +400,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                             $renderer->doc .= '<tr class="sp_result"><td class="sp_page" colspan="2">';
 
                             // in case of integration with searchpattern there is no chance to find the index of an element
-                            $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page);
+                            $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $page, array('checkbox'=>'yes', 'username'=>'user'));
 
                             $renderer->doc .= '</td></tr>';
                         }
