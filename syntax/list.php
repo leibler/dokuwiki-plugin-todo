@@ -58,15 +58,27 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $options = explode(' ', $options);
         $data = array(
             'completed' => 'all',
-            'assigned' => 'all'
+            'assigned' => 'all',
+            'checkbox' => 'yes',
+            'username' => 'user'
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
+                case 'checkbox': // should checkbox be rendered?
+                    if(in_array($value, $allowedvalues)) {
+                        $data['checkbox'] = ($value == 'yes');
+                    }
+                    break;
                 case 'completed':
                     if(in_array($value, $allowedvalues)) {
                         $data['completed'] = ($value == 'yes');
+                    }
+                    break;
+                case 'username': // how should the username be rendered?
+                    if(in_array($value, array('user', 'real', 'none'))) {
+                        $data['username'] = $value;
                     }
                     break;
                 case 'assigned':
@@ -118,7 +130,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         $todopages = $this->filterpages($todopages, $data);
 
-        $this->htmlTodoTable($renderer, $todopages);
+        $this->htmlTodoTable($renderer, $todopages, $data);
 
         return true;
     }
@@ -199,8 +211,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      *
      * @param Doku_Renderer_xhtml $R
      * @param array $todopages
+     * @param array $data array with rendering options
      */
-    private function htmlTodoTable($R, $todopages) {
+    private function htmlTodoTable($R, $todopages, $data) {
         $R->table_open();
         foreach($todopages as $page) {
             $R->tablerow_open();
@@ -211,7 +224,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             foreach($page['todos'] as $todo) {
                 $R->tablerow_open();
                 $R->tablecell_open();
-                $R->doc .= $this->createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id']);
+                $R->doc .= $this->createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id'], $data);
                 $R->tablecell_close();
                 $R->tablerow_close();
             }
