@@ -38,7 +38,7 @@
  * ChangeLog:
  *
  * [05/11/2014] : by Markus Gschwendt <markus@runout.at>
- *               add options for list rendering: username:user|real|none checkbox:yes|no
+ *               add options for list rendering: username:user|real|none checkbox:yes|no header:id|firstheader
  ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  **               bugfix: config option Strikethrough
  * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
