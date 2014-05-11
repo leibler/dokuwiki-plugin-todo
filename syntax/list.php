@@ -57,11 +57,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
         $data = array(
-            'header' => 'id',
+            'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
-            'checkbox' => 'yes',
-            'username' => 'user'
+            'checkbox' => $this->getConf("Checkbox"),
+            'username' => $this->getConf("Username")
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
