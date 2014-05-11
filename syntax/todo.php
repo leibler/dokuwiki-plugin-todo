@@ -278,7 +278,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
 
         $spanclass = 'todotext';
-        if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks")) {
+        if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
         $return .= '<span class="' . $spanclass . '">';
