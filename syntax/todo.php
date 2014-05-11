@@ -206,7 +206,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             if($state == DOKU_LEXER_UNMATCHED) {
 
                 #Output our result
-                $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $ID);
+                $renderer->doc .= $this->createTodoItem($renderer, $todotitle, $todoindex, $todouser, $checked, $ID, array('checkbox'=>'yes', 'username'=>'user'));
                 return true;
             }
 
