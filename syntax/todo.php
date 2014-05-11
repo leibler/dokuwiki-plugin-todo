@@ -37,6 +37,8 @@
 /**
  * ChangeLog:
  *
+ * [05/11/2014] : by Markus Gschwendt <markus@runout.at>
+ *               add options for list rendering: username:user|real|none checkbox:yes|no
  ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  **               bugfix: config option Strikethrough
  * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
@@ -248,21 +250,29 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param string $todouser  User assigned to todoitem
      * @param bool   $checked   whether item is done
      * @param string $id of page
+     * @param array  $data  data for rendering options
      * @return string html of an item
      */
-    protected function createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id) {
+    protected function createTodoItem(&$renderer, $todotitle, $todoindex, $todouser, $checked, $id, $data) {
         //set correct context
-        global $ID;
+        global $ID, $INFO;
         $oldID = $ID;
         $ID = $id;
 
 
-        $return = '<input type="checkbox" class="todocheckbox"'
+        if($data['checkbox']) {
+            $return = '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
             . ($checked ? 'checked="checked"' : '') . ' /> ';
+        }
+        switch ($data['username']) {
+            case "user": break;
+            case "real": $todouser = $INFO['userinfo']['name']; break;
+            case "none": unset($todouser); break;
+        }
         if($todouser) {
             $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
