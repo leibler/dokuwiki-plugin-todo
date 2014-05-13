@@ -291,7 +291,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         if($this->getConf("AllowLinks")) {
             $return .= $this->_createLink($renderer, $todotitle, $todotitle);
         } else {
-            $return .= hsc($todotitle);
+            $return .= $renderer->internallink($id, $todotitle, null, true);
         }
         $return .= '</span>';
 
