@@ -68,7 +68,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
             	case 'header': // how should the header be rendered?
-                    if(in_array($value, array('id', 'firstheader'))) {
+                    if(in_array($value, array('id', 'firstheader', 'none''))) {
                         $data['header'] = $value;
                     }
                     break;
@@ -222,11 +222,13 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function htmlTodoTable($R, $todopages, $data) {
         $R->table_open();
         foreach($todopages as $page) {
-            $R->tablerow_open();
-            $R->tableheader_open();
-            $R->internallink($page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
-            $R->tableheader_close();
-            $R->tablerow_close();
+       	    if ($data['header']!='none') {
+                $R->tablerow_open();
+                $R->tableheader_open();
+                $R->internallink($page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
+                $R->tableheader_close();
+                $R->tablerow_close();
+       	    }
             foreach($page['todos'] as $todo) {
                 $R->tablerow_open();
                 $R->tablecell_open();
