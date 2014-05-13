@@ -68,7 +68,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
             	case 'header': // how should the header be rendered?
-                    if(in_array($value, array('id', 'firstheader', 'none''))) {
+                    if(in_array($value, array('id', 'firstheader', 'none'))) {
                         $data['header'] = $value;
                     }
                     break;
