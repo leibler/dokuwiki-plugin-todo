@@ -57,15 +57,21 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
         $data = array(
+            'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
-            'checkbox' => 'yes',
-            'username' => 'user'
+            'checkbox' => $this->getConf("Checkbox"),
+            'username' => $this->getConf("Username")
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
+            	case 'header': // how should the header be rendered?
+                    if(in_array($value, array('id', 'firstheader', 'none'))) {
+                        $data['header'] = $value;
+                    }
+                    break;
                 case 'checkbox': // should checkbox be rendered?
                     if(in_array($value, $allowedvalues)) {
                         $data['checkbox'] = ($value == 'yes');
@@ -216,11 +222,13 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function htmlTodoTable($R, $todopages, $data) {
         $R->table_open();
         foreach($todopages as $page) {
-            $R->tablerow_open();
-            $R->tableheader_open();
-            $R->internallink($page['id'], $page['id']);
-            $R->tableheader_close();
-            $R->tablerow_close();
+       	    if ($data['header']!='none') {
+                $R->tablerow_open();
+                $R->tableheader_open();
+                $R->internallink($page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
+                $R->tableheader_close();
+                $R->tablerow_close();
+       	    }
             foreach($page['todos'] as $todo) {
                 $R->tablerow_open();
                 $R->tablecell_open();
