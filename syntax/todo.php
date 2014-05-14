@@ -299,9 +299,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
         switch ($data['username']) {
             case "user": break;
-            case "real":
-                 $todouser = userlink($todouser);
-                 break;
+            case "real": $todouser = userlink($todouser, true); break;
             case "none": unset($todouser); break;
         }
         if($todouser) {
