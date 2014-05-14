@@ -61,7 +61,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'completed' => 'all',
             'assigned' => 'all',
             'checkbox' => $this->getConf("Checkbox"),
-            'username' => $this->getConf("Username")
+            'username' => $this->getConf("Username"),
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
@@ -198,11 +198,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $todos = array();
             // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
             foreach($page['matches'][1] as $todoindex => $todomatch) {
-                list($checked, $todouser) = $this->parseTodoArgs($todomatch);
+                $todoargs = $this->parseTodoArgs($todomatch);
                 $todotitle = trim($page['matches'][2][$todoindex]);
 
-                if($this->isRequestedTodo($data, $checked, $todouser)) {
-                    $todos[] = array($todotitle, $todoindex, $todouser, $checked);
+                if($this->isRequestedTodo($data, $todoargs['checked'], $todoargs['todouser'])) {
+                    $todos[] = array_merge(array('todotitle' => $todotitle, 'todoindex' => $todoindex, 'todouser' => $todouser, 'checked' => $checked), $this->parseTodoArgs($todomatch));
                 }
             }
             if(count($todos) > 0) {
@@ -232,7 +232,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             foreach($page['todos'] as $todo) {
                 $R->tablerow_open();
                 $R->tablecell_open();
-                $R->doc .= $this->createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id'], $data);
+                $R->doc .= $this->createTodoItem($R, $page['id'], array_merge($todo, $data));
                 $R->tablecell_close();
                 $R->tablerow_close();
             }
