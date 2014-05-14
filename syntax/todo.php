@@ -231,24 +231,16 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     protected function parseTodoArgs($todoargs) {
         $checked = $todouser = false;
-
-/*        if(($userStartPos = strpos($todoargs, '@')) !== false && (preg_match('%@([-.\w@]+)%i', substr($todoargs, $userStartPos), $usermatch))) {
-                $todouser = $usermatch[1];
-        }
-*/
+        $data['checked'] = false;
         $options = explode(' ', $todoargs);
-/*        $data = array(
-            'checked' => strpos($todoargs, '#') !== false,
-            'todouser' => $todouser,
-        );
-*/        unset($data['start']);
+        unset($data['start']);
         unset($data['due']);
         foreach($options as $option) {
-            if($option[0]=='@') {
+            if($option[0] == '@') {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
             }
-            elseif(strpos($todoargs, '#') !== false) { $data['checked'] = true;
+            elseif($option[0] == '#') { $data['checked'] = true;
             }
             else {
                 @list($key, $value) = explode(':', $option, 2);
