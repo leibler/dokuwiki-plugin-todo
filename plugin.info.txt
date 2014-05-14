@@ -1,7 +1,7 @@
 base   todo
 author Babbage; Leo Eibler
 email  babbage@digitalbrink.com; dokuwiki@sprossenwanne.at
-date   2014-05-11
+date   2014-05-14
 name   ToDo
 desc   Create a checkbox based todo list with optional user assignment (by using <todo>This is a ToDo</todo>). In combination with dokuwiki searchpattern plugin it is a lightweight task list management system.
 url    https://www.dokuwiki.org/plugin:todo
