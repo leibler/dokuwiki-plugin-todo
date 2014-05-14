@@ -152,10 +152,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
                 $x = preg_match('%<todo([^>]*)>%i', $match, $tododata);
                 if($x) {
-//                    list($handler->checked, $handler->todo_user) = $this->parseTodoArgs($tododata[1]);
                     $handler->todoargs =  $this->parseTodoArgs($tododata[1]);
-//                    $handler->checked = $handler->todoargs[0];
-//                    $handler->todo_user = $handler->todoargs[1];
                 }
                 if(!is_numeric($handler->todo_index)) {
                     $handler->todo_index = 0;
@@ -235,31 +232,39 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
     protected function parseTodoArgs($todoargs) {
         $checked = $todouser = false;
 
-        if(($userStartPos = strpos($todoargs, '@')) !== false && (preg_match('%@([-.\w@]+)%i', substr($todoargs, $userStartPos), $usermatch))) {
+/*        if(($userStartPos = strpos($todoargs, '@')) !== false && (preg_match('%@([-.\w@]+)%i', substr($todoargs, $userStartPos), $usermatch))) {
                 $todouser = $usermatch[1];
         }
-
+*/
         $options = explode(' ', $todoargs);
-        $data = array(
+/*        $data = array(
             'checked' => strpos($todoargs, '#') !== false,
             'todouser' => $todouser,
         );
-        unset($data['start']);
+*/        unset($data['start']);
         unset($data['due']);
         foreach($options as $option) {
-            @list($key, $value) = explode(':', $option, 2);
-            switch($key) {
+            if($option[0]=='@') {
+                $data['todousers'][] = substr($option, 1); //fill todousers array
+                if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
+            }
+            elseif(strpos($todoargs, '#') !== false) { $data['checked'] = true;
+            }
+            else {
+                @list($key, $value) = explode(':', $option, 2);
+                switch($key) {
 
-                case 'start':
+                    case 'start':
+                            if(date('Y-m-d', strtotime($value)) == $value) {
+                                $data['start'] = new DateTime($value);
+                            }
+                        break;
+                    case 'due':
                         if(date('Y-m-d', strtotime($value)) == $value) {
-                            $data['start'] = new DateTime($value);
-                        }
-                    break;
-                case 'due':
-                    if(date('Y-m-d', strtotime($value)) == $value) {
-                            $data['due'] = new DateTime($value);
-                        }
-                    break;
+                                $data['due'] = new DateTime($value);
+                            }
+                        break;
+                }
             }
         }
         return $data;
@@ -294,7 +299,9 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
         switch ($data['username']) {
             case "user": break;
-            case "real": $todouser = $INFO['userinfo']['name']; break;
+            case "real":
+                 $todouser = userlink($todouser);
+                 break;
             case "none": unset($todouser); break;
         }
         if($todouser) {
