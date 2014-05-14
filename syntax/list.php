@@ -202,7 +202,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 $todotitle = trim($page['matches'][2][$todoindex]);
 
                 if($this->isRequestedTodo($data, $todoargs['checked'], $todoargs['todouser'])) {
-                    $todos[] = array_merge(array('todotitle' => $todotitle, 'todoindex' => $todoindex, 'todouser' => $todouser, 'checked' => $checked), $this->parseTodoArgs($todomatch));
+                    $todos[] = array_merge(array('todotitle' => $todotitle, 'todoindex' => $todoindex), $this->parseTodoArgs($todomatch));
                 }
             }
             if(count($todos) > 0) {
