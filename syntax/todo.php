@@ -37,9 +37,12 @@
 /**
  * ChangeLog:
  *
+ * [05/15/2014]: by Markus Gschwendt <markus@runout.at>
+ *               multiple users in <todo>, only the first user will be shown in rendered output
+ *               ! there is still a bug when the checkbox is clicked the arguments of the <todo> tag will be lost
  * [05/14/2014]: by Markus Gschwendt <markus@runout.at>
- * 		  add start-due date: set a start and/or due date and get colored output (css)
- * 		  clean up some code, so we have less variables in function calls, use arrays instead
+ *               add start-due date: set a start and/or due date and get colored output (css)
+ *               clean up some code, so we have less variables in function calls, use arrays instead
  * [05/11/2014]: by Markus Gschwendt <markus@runout.at>
  *                add options for list rendering: username:user|real|none checkbox:yes|no header:id|firstheader
  ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
@@ -230,12 +233,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @return array(bool, false|string) with checked and user
      */
     protected function parseTodoArgs($todoargs) {
-        $checked = $todouser = false;
         $data['checked'] = false;
-        $options = explode(' ', $todoargs);
         unset($data['start']);
         unset($data['due']);
+        $options = explode(' ', $todoargs);
         foreach($options as $option) {
+            $option = trim($option);
             if($option[0] == '@') {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
@@ -279,7 +282,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $ID = $id;
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
-        $todouser = $data['todouser'];
+        $todouser = $data['todousers'][0];
         $checked = $data['checked'];
         if($data['checkbox']) {
             $return = '<input type="checkbox" class="todocheckbox"'
@@ -291,7 +294,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
         switch ($data['username']) {
             case "user": break;
-            case "real": $todouser = userlink($todouser, true); break;
+            case "real": if(!$todouser = userlink($todouser, true)) { $todouser = $data['todousers'][0]; } break; //only if the user exists
             case "none": unset($todouser); break;
         }
         if($todouser) {
