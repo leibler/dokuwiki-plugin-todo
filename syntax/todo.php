@@ -320,7 +320,9 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= $this->_createLink($renderer, $todotitle, $todotitle);
         } else {
             $return .= $renderer->internallink($id, $todotitle, null, true);
-        }
+        }            } else {
+                 $return .= hsc($todotitle);
+            }
         $return .= '</span>';
 
         if($checked && $this->getConf("Strikethrough")) {
