@@ -57,15 +57,21 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
         $data = array(
+            'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
-            'checkbox' => 'yes',
-            'username' => 'user'
+            'checkbox' => $this->getConf("Checkbox"),
+            'username' => $this->getConf("Username"),
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
+            	case 'header': // how should the header be rendered?
+                    if(in_array($value, array('id', 'firstheader', 'none'))) {
+                        $data['header'] = $value;
+                    }
+                    break;
                 case 'checkbox': // should checkbox be rendered?
                     if(in_array($value, $allowedvalues)) {
                         $data['checkbox'] = ($value == 'yes');
@@ -99,7 +105,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                                 return $user;
                             }
                             //user
-                            return ltrim($user, '@');
+                            return trim(ltrim($user, '@'));
                         }, $data['assigned']
                     );
                     break;
@@ -192,12 +198,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $todos = array();
             // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
             foreach($page['matches'][1] as $todoindex => $todomatch) {
-                list($checked, $todouser) = $this->parseTodoArgs($todomatch);
-                $todotitle = trim($page['matches'][2][$todoindex]);
+                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-                if($this->isRequestedTodo($data, $checked, $todouser)) {
-                    $todos[] = array($todotitle, $todoindex, $todouser, $checked);
-                }
+                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
             }
             if(count($todos) > 0) {
                 $pages[] = array('id' => $page['id'], 'todos' => $todos);
@@ -216,15 +219,18 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function htmlTodoTable($R, $todopages, $data) {
         $R->table_open();
         foreach($todopages as $page) {
-            $R->tablerow_open();
-            $R->tableheader_open();
-            $R->internallink($page['id'], $page['id']);
-            $R->tableheader_close();
-            $R->tablerow_close();
+       	    if ($data['header']!='none') {
+                $R->tablerow_open();
+                $R->tableheader_open();
+                $R->internallink($page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
+                $R->tableheader_close();
+                $R->tablerow_close();
+       	    }
             foreach($page['todos'] as $todo) {
+//echo "<pre>";var_dump($todo);echo "</pre>";
                 $R->tablerow_open();
                 $R->tablecell_open();
-                $R->doc .= $this->createTodoItem($R, $todo[0], $todo[1], $todo[2], $todo[3], $page['id'], $data);
+                $R->doc .= $this->createTodoItem($R, $page['id'], array_merge($todo, $data));
                 $R->tablecell_close();
                 $R->tablerow_close();
             }
@@ -240,11 +246,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param $todouser string user username of user
      * @return bool if the todoitem should be listed
      */
-    private function isRequestedTodo($data, $checked, $todouser) {
+    private function isRequestedTodo($data) {
 
         //completion status
         $condition1 = $data['completed'] === 'all' //all
-                      || $data['completed'] === $checked; //yes or no
+                      || $data['completed'] === $data['checked']; //yes or no
 
         // resolve placeholder in assignees
         $requestedassignees = array();
@@ -259,15 +265,20 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 					if( $user == '@@MAIL@@' && isset( $USERINFO['mail'] ) ) {  
 							return $USERINFO['mail'];
 					}
-                    return $user;
+                    return  $user;
                 },
                 $data['assigned']
             );
         }
         //assigned
-        $condition2 =   $data['assigned'] === 'all' //all
-                        || (is_bool($data['assigned']) && $data['assigned'] == $todouser) //yes or no
-                        || (is_array($data['assigned']) && in_array($todouser, $requestedassignees)); //one of the requested users?
+        $condition2 = $condition2
+                        || $data['assigned'] === 'all' //all
+                        || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
+
+        if (!$condition2 && is_array($data['assigned']) && is_array($data['todousers']))
+            foreach($data['todousers'] as $todouser) {
+                if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
+            }
 
         return $condition1 AND $condition2;
     }
