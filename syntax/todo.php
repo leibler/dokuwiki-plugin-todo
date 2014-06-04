@@ -282,6 +282,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $ID = $id;
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
+//echo  '<pre>';var_dump($data['start']);var_dump($data['todousers']);echo'</pre>';
         $todouser = $data['todousers'][0];
         $checked = $data['checked'];
         if($data['checkbox']) {
@@ -292,7 +293,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
             . ($checked ? 'checked="checked"' : '') . ' /> ';
         }
-        switch ($data['username']) {
+        if($todouser) switch ($data['username']) {
             case "user": break;
             case "real": if(!$todouser = userlink($todouser, true)) { $todouser = $data['todousers'][0]; } break; //only if the user exists
             case "none": unset($todouser); break;
@@ -319,9 +320,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         if($this->getConf("AllowLinks")) {
             $return .= $this->_createLink($renderer, $todotitle, $todotitle);
         } else {
-            $return .= $renderer->internallink($id, $todotitle, null, true);
-        } else {
-            $return .= hsc($todotitle);
+            if ($oldID != $ID) {
+                $return .= $renderer->internallink($id, $todotitle, null, true);
+            } else {
+                 $return .= hsc($todotitle);
+            }
         }
         $return .= '</span>';
 
