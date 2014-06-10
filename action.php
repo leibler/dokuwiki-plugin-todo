@@ -196,8 +196,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         if($checked == 1) {
             $newTag .= ' #';
         }
-*/
         $newTag .= '>';
+*/
         return $newTag;
     }
 
