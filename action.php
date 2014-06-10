@@ -174,6 +174,13 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @return string new to-do completed or uncompleted tag e.g. <todo @user #>
      */
     private function _buildTodoTag($todoTag, $checked) {
+        if($checked == 1) {
+            $newTag = preg_replace('/[#|\s]*>/', ' #>', $todoTag);
+        } else {
+            $newTag = preg_replace('/[#|\s]*>/', '>', $todoTag);
+        }
+    	
+/* @date 20140610 runout-at: following will not work with several new options
         $x = preg_match('%<todo([^>]*)>%i', $todoTag, $matches);
         $newTag = '<todo';
         if($x) {
@@ -189,6 +196,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         if($checked == 1) {
             $newTag .= ' #';
         }
+*/
         $newTag .= '>';
         return $newTag;
     }
