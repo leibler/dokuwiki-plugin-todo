@@ -175,9 +175,9 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      */
     private function _buildTodoTag($todoTag, $checked) {
         if($checked == 1) {
-            $newTag = preg_replace('/[#|\s]*>/', ' #>', $todoTag);
+            $newTag = preg_replace('/[#\s]*>/', ' #>', $todoTag);
         } else {
-            $newTag = preg_replace('/[#|\s]*>/', '>', $todoTag);
+            $newTag = preg_replace('/[#\s]*>/', '>', $todoTag);
         }
     	
         return $newTag;
