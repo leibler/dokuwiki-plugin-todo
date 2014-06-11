@@ -13,5 +13,5 @@ $meta['CheckboxText'] = array('onoff');
 $meta['Checkbox'] = array('onoff');
 $meta['Header'] = array('multichoice', '_choices' => array('id','firstheader','none'));
 $meta['Username'] = array('multichoice', '_choices' => array('user','real','none'));
-
+$meta['Showdate'] = array('onoff');
 //Setup VIM: ex: et ts=2 enc=utf-8 :
