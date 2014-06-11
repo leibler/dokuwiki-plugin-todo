@@ -60,7 +60,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
-            'showdate' => $this->getConf("Showdate"),
+            'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
             'username' => $this->getConf("Username"),
         );
@@ -75,7 +75,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     break;
                 case 'showdate':
                     if(in_array($value, $allowedvalues)) {
-                        $data['showdate'] = $value;
+                        $data['showdate'] = ($value == 'yes');
                     }
                     break;
                 case 'checkbox': // should checkbox be rendered?
@@ -289,3 +289,5 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         return $condition1 AND $condition2;
     }
 }
+tableheader_open();
+                $R-
