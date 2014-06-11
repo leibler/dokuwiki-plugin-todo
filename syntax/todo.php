@@ -238,7 +238,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $data['checked'] = false;
         unset($data['start']);
         unset($data['due']);
-	$data['showdate'] = $this->getConf("Showdate");
+	$data['showdate'] = $this->getConf("ShowdateTag");
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
@@ -264,7 +264,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                         break;
 		    case 'showdate':
                         if(in_array($value, array('yes', 'no'))) {
-                            $data['showdate'] = $value;
+                            $data['showdate'] = ($value == 'yes');
                         }
                         break;
                 }
