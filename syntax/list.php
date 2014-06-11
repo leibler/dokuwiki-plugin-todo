@@ -60,6 +60,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
+            'showdate' => $this->getConf("Showdate"),
             'checkbox' => $this->getConf("Checkbox"),
             'username' => $this->getConf("Username"),
         );
@@ -70,6 +71,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             	case 'header': // how should the header be rendered?
                     if(in_array($value, array('id', 'firstheader', 'none'))) {
                         $data['header'] = $value;
+                    }
+                    break;
+                case 'showdate':
+                    if(in_array($value, $allowedvalues)) {
+                        $data['showdate'] = $value;
                     }
                     break;
                 case 'checkbox': // should checkbox be rendered?
