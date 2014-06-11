@@ -10,5 +10,5 @@ $conf['CheckboxText'] = 1; //Should we allow action text to check the checkbox
 $conf['Checkbox'] = 1; // Should the Checkbox be rendered in list view
 $conf['Header'] = 'id'; // How should the header of list be rendered ID/FIRSTHEADER
 $conf['Username'] = 'user'; //How should the name of the assigned user be rendered USER/REALNAME/NONE
-
+$conf['Showdate'] = 0; // Should the Start/Due-Date be rendered
 //Setup VIM: ex: et ts=2 enc=utf-8 :
