@@ -37,6 +37,8 @@
 /**
  * ChangeLog:
  *
+ * [06/11/2014]: by Markus Gschwendt <markus@runout.at>
+ *               add option showdate to show/hide start/due-date
  * [05/15/2014]: by Markus Gschwendt <markus@runout.at>
  *               multiple users in <todo>, only the first user will be shown in rendered output
  *               ! there is still a bug when the checkbox is clicked the arguments of the <todo> tag will be lost
@@ -44,7 +46,7 @@
  *               add start-due date: set a start and/or due date and get colored output (css)
  *               clean up some code, so we have less variables in function calls, use arrays instead
  * [05/11/2014]: by Markus Gschwendt <markus@runout.at>
- *                add options for list rendering: username:user|real|none checkbox:yes|no header:id|firstheader
+ *               add options for list rendering: username:user|real|none checkbox:yes|no header:id|firstheader
  ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
  **               bugfix: config option Strikethrough
  * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
@@ -236,6 +238,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $data['checked'] = false;
         unset($data['start']);
         unset($data['due']);
+	$data['showdate'] = $this->getConf("ShowdateTag");
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
@@ -250,14 +253,19 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 switch($key) {
 
                     case 'start':
-                            if(date('Y-m-d', strtotime($value)) == $value) {
-                                $data['start'] = new DateTime($value);
-                            }
+                        if(date('Y-m-d', strtotime($value)) == $value) {
+                            $data['start'] = new DateTime($value);
+                        }
                         break;
                     case 'due':
                         if(date('Y-m-d', strtotime($value)) == $value) {
-                                $data['due'] = new DateTime($value);
-                            }
+                            $data['due'] = new DateTime($value);
+                        }
+                        break;
+		    case 'showdate':
+                        if(in_array($value, array('yes', 'no'))) {
+                            $data['showdate'] = ($value == 'yes');
+                        }
                         break;
                 }
             }
@@ -267,10 +275,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
     /**
      * @param Doku_Renderer_xhtml &$renderer
-     * @param string $todotitle Title of todoitem
-     * @param int    $todoindex which number the todoitem has, null is when not at the page
-     * @param string $todouser  User assigned to todoitem
-     * @param bool   $checked   whether item is done
      * @param string $id of page
      * @param array  $data  data for rendering options
      * @return string html of an item
@@ -282,7 +286,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $ID = $id;
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
-//echo  '<pre>';var_dump($data['start']);var_dump($data['todousers']);echo'</pre>';
         $todouser = $data['todousers'][0];
         $checked = $data['checked'];
         if($data['checkbox']) {
@@ -302,14 +305,24 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
 
+        unset($bg);
+        $now = new DateTime("now");
+        if(!$checked && (isset($data['start']) || isset($data['due'])) && (!isset($data['start']) || $data['start']<$now) && (!isset($data['due']) || $now<$data['due'])) $bg='todostarted';
+        if(!$checked && isset($data['due']) && $now>=$data['due']) $bg='tododue';
+
+        // show start/due date
+        if($data['showdate'] == 1 && (isset($data['start']) || isset($data['due']))) {
+            $return .= ' [';
+            if(isset($data['start'])) { $return .= $data['start']->format('Y-m-d'); }
+            $return .= ' → ';
+            if(isset($data['due'])) { $return .= $data['due']->format('Y-m-d'); }
+            $return .= '] ';
+        }
+
         $spanclass = 'todotext';
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
-        unset($bg);
-        $now = new DateTime("now");
-        if((!isset($data['start']) || $data['start']<$now) && $now<$data['due']) $bg='todostarted';
-        if(isset($data['due']) && $now>=$data['due'] && !$checked) $bg='tododue';
         if(isset($bg)) $spanclass .= ' '.$bg;
         $return .= '<span class="' . $spanclass . '">';
 
