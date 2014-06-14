@@ -37,6 +37,11 @@
 /**
  * ChangeLog:
  *
+ * [06/14/2014]: by Markus Gschwendt <markus@runout.at>
+ *               add option usernames for <todo>
+ *               add start/due-date filter to todolist
+ *               bugfix: when the checkbox is clicked the arguments of the <todo> tag will be lost
+ *               some minor bugfixes
  * [06/11/2014]: by Markus Gschwendt <markus@runout.at>
  *               add option showdate to show/hide start/due-date
  * [05/15/2014]: by Markus Gschwendt <markus@runout.at>
@@ -214,7 +219,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             if($state == DOKU_LEXER_UNMATCHED) {
 
                 #Output our result
-                $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes', 'username'=>'user')));
+                $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
                 return true;
             }
 
@@ -239,6 +244,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
 	$data['showdate'] = $this->getConf("ShowdateTag");
+        $data['username'] = $this->getConf("Username");
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
@@ -251,7 +257,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
-
+                    case 'username':
+                        if(in_array($value, array('user', 'real', 'none'))) {
+                            $data['username'] = $value;
+                        }
+                        break;
                     case 'start':
                         if(date('Y-m-d', strtotime($value)) == $value) {
                             $data['start'] = new DateTime($value);
@@ -288,6 +298,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todoindex = $data['todoindex'];
         $todouser = $data['todousers'][0];
         $checked = $data['checked'];
+
         if($data['checkbox']) {
             $return = '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
@@ -296,15 +307,22 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
             . ($checked ? 'checked="checked"' : '') . ' /> ';
         }
-        if($todouser) switch ($data['username']) {
-            case "user": break;
-            case "real": if(!$todouser = userlink($todouser, true)) { $todouser = $data['todousers'][0]; } break; //only if the user exists
-            case "none": unset($todouser); break;
-        }
-        if($todouser) {
+
+        // Username of first todouser in list
+        if($todouser && $data['username'] != 'none') {
+            switch ($data['username']) {
+                case "user": break;
+                case "real":
+                    if(!($todouser = userlink($todouser, true))) { //only if the user exists
+                        $todouser = $data['todousers'][0];
+                    }
+                    break;
+                case "none": unset($todouser); break;
+            }
             $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
 
+        // start/due date
         unset($bg);
         $now = new DateTime("now");
         if(!$checked && (isset($data['start']) || isset($data['due'])) && (!isset($data['start']) || $data['start']<$now) && (!isset($data['due']) || $now<$data['due'])) $bg='todostarted';
@@ -312,11 +330,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
         // show start/due date
         if($data['showdate'] == 1 && (isset($data['start']) || isset($data['due']))) {
-            $return .= ' [';
+            $return .= '<span class="tododates">[';
             if(isset($data['start'])) { $return .= $data['start']->format('Y-m-d'); }
             $return .= ' → ';
             if(isset($data['due'])) { $return .= $data['due']->format('Y-m-d'); }
-            $return .= '] ';
+            $return .= ']</span>';
         }
 
         $spanclass = 'todotext';
