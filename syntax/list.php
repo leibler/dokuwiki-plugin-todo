@@ -115,7 +115,19 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                         }, $data['assigned']
                     );
                     break;
-            }
+                case 'startbefore':
+                    $data['startbefore'] = $this->analyseDate($value);
+                    break;
+                case 'startafter':
+                    $data['startafter'] = $this->analyseDate($value);
+                    break;
+                 case 'duebefore':
+                    $data['duebefore'] = $this->analyseDate($value);
+                    break;
+                 case 'dueafter':
+                    $data['dueafter'] = $this->analyseDate($value);
+                    break;
+             }
         }
         return $data;
     }
@@ -253,7 +265,6 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @return bool if the todoitem should be listed
      */
     private function isRequestedTodo($data) {
-
         //completion status
         $condition1 = $data['completed'] === 'all' //all
                       || $data['completed'] === $data['checked']; //yes or no
@@ -286,7 +297,41 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
 
-        return $condition1 AND $condition2;
+        //compare start/due dates
+        if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['duebefore']) || isset($data['dueafter'])) {
+            $condition3 = false;
+            if((isset($data['startbefore']) && isset($data['start'])) || (isset($data['startafter']) && isset($data['start']))
+              || (isset($data['duebefore']) && isset($data['due'])) || (isset($data['dueafter']) && isset($data['due']))) {
+                $condition3 = true;
+                if(isset($data['startbefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['start']; }
+                if(isset($data['startafter'])) { $condition3 = $condition3 && new DateTime($data['startafter']) < $data['start']; }
+                if(isset($data['duebefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['due']; }
+                if(isset($data['dueafter'])) { $condition3 = $condition3 && new DateTime($data['duebefore']) < $data['due']; }
+            }
+        } else { $condition3 = true; }
+        return $condition1 AND $condition2 AND $condition3;
+    }
+
+    /**
+    * Analyse of relative/absolute Date and return an absolute date
+    *
+    * @param $date	string	absolute/relative value of the date to analyse
+    * @return 		tring   absolute date or actual date if $date is invalid
+    */
+    private function analyseDate($date) {
+        if(is_string($date)) {
+            if(date('Y-m-d', strtotime($date)) == $date) {
+                $result = $date;
+            } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
+                $newdate = date_create(date('Y-m-d'));
+                date_modify($newdate, $date . ' day');
+                $result = date_format($newdate, 'Y-m-d');
+            } else {
+                $result = date('Y-m-d');
+            }
+        } else {
+            $result = date('Y-m-d');
+        }
+        return $result;
     }
 }
-
