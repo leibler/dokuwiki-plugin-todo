@@ -60,6 +60,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
+            'ns' => 'all',
             'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
             'username' => $this->getConf("Username"),
@@ -114,6 +115,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                             return trim(ltrim($user, '@'));
                         }, $data['assigned']
                     );
+                    break;
+                case 'ns':
+                    $data['ns'] = $value;
                     break;
                 case 'startbefore':
                     $data['startbefore'] = $this->analyseDate($value);
@@ -213,15 +217,28 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function filterpages($todopages, $data) {
         $pages = array();
         foreach($todopages as $page) {
-            $todos = array();
-            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
-            foreach($page['matches'][1] as $todoindex => $todomatch) {
-                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
-
-                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+            $parsepage = 0;
+            if ($data['ns'] == 'all') {
+                // Always return the todo pages
+                $parsepage = 1;
+            } elseif ($data['ns'] == '/') {
+                // Only return the todo page if it's in the root namespace 
+                if (strpos($page['id'], ':') === FALSE) $parsepage = 1;
+            } elseif (substr( $page['id'], 0, strlen($data['ns']) ) === $data['ns']) {
+                // Only return the todo page if it starts with the given string
+                $parsepage = 1;
             }
-            if(count($todos) > 0) {
-                $pages[] = array('id' => $page['id'], 'todos' => $todos);
+            if ($parsepage == 1) {
+                $todos = array();
+                // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+                foreach($page['matches'][1] as $todoindex => $todomatch) {
+                    $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
+
+                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                }
+                if(count($todos) > 0) {
+                    $pages[] = array('id' => $page['id'], 'todos' => $todos);
+                }              
             }
         }
         return $pages;
@@ -316,7 +333,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     * Analyse of relative/absolute Date and return an absolute date
     *
     * @param $date	string	absolute/relative value of the date to analyse
-    * @return 		tring   absolute date or actual date if $date is invalid
+    * @return 		string   absolute date or actual date if $date is invalid
     */
     private function analyseDate($date) {
         if(is_string($date)) {
