@@ -199,6 +199,24 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     }
 
     /**
+     * Expand assignee-placeholders 
+     * 
+     * @param $user	String to be worked on
+     * @return	expanded string
+     */
+    private function __todolistExpandAssignees($user) {
+        global $USERINFO;
+        if($user == '@@USER@@' && !empty($_SERVER['REMOTE_USER'])) {  //$INPUT->server->str('REMOTE_USER')
+            return $_SERVER['REMOTE_USER'];
+        }
+        // @date 20140317 le: check for logged in user email address
+        if( $user == '@@MAIL@@' && isset( $USERINFO['mail'] ) ) {  
+            return $USERINFO['mail'];
+        }
+        return  $user;
+    }
+
+    /**
      * Trim input if it's a user
      * 
      * @param $user	String to be worked on
@@ -295,20 +313,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         // resolve placeholder in assignees
         $requestedassignees = array();
         if(is_array($data['assigned'])) {
-            $requestedassignees = array_map(
-                function($user) {
-					global $USERINFO;
-                    if($user == '@@USER@@' && !empty($_SERVER['REMOTE_USER'])) {  //$INPUT->server->str('REMOTE_USER')
-                            return $_SERVER['REMOTE_USER'];
-                    }
-					// @date 20140317 le: check for logged in user email address
-					if( $user == '@@MAIL@@' && isset( $USERINFO['mail'] ) ) {  
-							return $USERINFO['mail'];
-					}
-                    return  $user;
-                },
-                $data['assigned']
-            );
+            $requestedassignees = array_map( array($this,"__todolistExpandAssignees"), $data['assigned'] );
         }
         //assigned
         $condition2 = $condition2
