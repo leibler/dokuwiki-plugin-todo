@@ -105,16 +105,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 					if( in_array( '@@USER@@', $data['assigned'] ) ) {
 						$data['assigned'][] = '@@MAIL@@';
 					}
-                    $data['assigned'] = array_map(
-                        function ($user) {
-                            //placeholder (inspired by replacement-patterns - see https://www.dokuwiki.org/namespace_templates#replacement_patterns)
-                            if( $user == '@@USER@@' || $user == '@@MAIL@@' ) {
-                                return $user;
-                            }
-                            //user
-                            return trim(ltrim($user, '@'));
-                        }, $data['assigned']
-                    );
+                    $data['assigned'] = array_map( array($this,"__todolistTrimUser"), $data['assigned'] );
                     break;
                 case 'ns':
                     $data['ns'] = $value;
@@ -205,6 +196,21 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $data[] = $item;
         }
         return true;
+    }
+
+    /**
+     * Trim input if it's a user
+     * 
+     * @param $user	String to be worked on
+     * @return	trimmed string
+     */
+    private function __todolistTrimUser($user) {
+        //placeholder (inspired by replacement-patterns - see https://www.dokuwiki.org/namespace_templates#replacement_patterns)
+        if( $user == '@@USER@@' || $user == '@@MAIL@@' ) {
+            return $user;
+        }
+        //user
+        return trim(ltrim($user, '@'));
     }
 
     /**
