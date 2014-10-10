@@ -333,8 +333,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 $condition3 = true;
                 if(isset($data['startbefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['start']; }
                 if(isset($data['startafter'])) { $condition3 = $condition3 && new DateTime($data['startafter']) < $data['start']; }
-                if(isset($data['duebefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['due']; }
-                if(isset($data['dueafter'])) { $condition3 = $condition3 && new DateTime($data['duebefore']) < $data['due']; }
+                if(isset($data['duebefore'])) { $condition3 = $condition3 && new DateTime($data['duebefore']) > $data['due']; }
+                if(isset($data['dueafter'])) { $condition3 = $condition3 && new DateTime($data['dueafter']) < $data['due']; }
             }
         } else { $condition3 = true; }
         return $condition1 AND $condition2 AND $condition3;
