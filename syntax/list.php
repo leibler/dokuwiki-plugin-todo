@@ -111,16 +111,16 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     $data['ns'] = $value;
                     break;
                 case 'startbefore':
-                    $data['startbefore'] = $this->analyseDate($value);
+                    list($data['startbefore'], $data['startignore']) = $this->analyseDate($value);
                     break;
                 case 'startafter':
-                    $data['startafter'] = $this->analyseDate($value);
+                    list($data['startafter'], $data['startignore']) = $this->analyseDate($value);
                     break;
                  case 'duebefore':
-                    $data['duebefore'] = $this->analyseDate($value);
+                    list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
                  case 'dueafter':
-                    $data['dueafter'] = $this->analyseDate($value);
+                    list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
              }
         }
@@ -326,40 +326,56 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
 
         //compare start/due dates
-        if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['duebefore']) || isset($data['dueafter'])) {
-            $condition3 = false;
-            if((isset($data['startbefore']) && isset($data['start'])) || (isset($data['startafter']) && isset($data['start']))
-              || (isset($data['duebefore']) && isset($data['due'])) || (isset($data['dueafter']) && isset($data['due']))) {
-                $condition3 = true;
-                if(isset($data['startbefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['start']; }
-                if(isset($data['startafter'])) { $condition3 = $condition3 && new DateTime($data['startafter']) < $data['start']; }
-                if(isset($data['duebefore'])) { $condition3 = $condition3 && new DateTime($data['duebefore']) > $data['due']; }
-                if(isset($data['dueafter'])) { $condition3 = $condition3 && new DateTime($data['dueafter']) < $data['due']; }
+        if($condition1 && $condition2) {
+            $condition3s = true; $condition3d = true;
+            if(!isset($data['start']) && (isset($data['startbefore']) || isset($data['startafter']))) {
+                if(!$data['startignore'] == '!') { $condition3s = false; }
+            } elseif (is_object($data['start']) && (isset($data['startbefore']) || isset($data['startafter']))) {
+                $condition3s = true;
+                if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
+                if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
             }
-        } else { $condition3 = true; }
+
+            if(!isset($data['due']) && (isset($data['duebefore']) || isset($data['dueafter']))) {
+                if(!$data['dueignore'] == '!') { $condition3d = false; }
+            } elseif (is_object($data['due']) && (isset($data['duebefore']) || isset($data['dueafter']))) {
+                $condition3d = true;
+                if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
+                if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+            }
+
+            $condition3 = $condition3s && $condition3d;
+        }
+
         return $condition1 AND $condition2 AND $condition3;
     }
 
     /**
     * Analyse of relative/absolute Date and return an absolute date
     *
-    * @param $date	string	absolute/relative value of the date to analyse
-    * @return 		string   absolute date or actual date if $date is invalid
+    * @param $date      string  absolute/relative value of the date to analyse
+    * @return           array   absolute date or actual date if $date is invalid
     */
     private function analyseDate($date) {
+        $result = array($date, '');
         if(is_string($date)) {
+            if(substr($date, -1) == '!') {
+                $date = substr($date, 0, -1);
+                $result = array($date, '!');
+            }
             if(date('Y-m-d', strtotime($date)) == $date) {
-                $result = $date;
+                $result[0] = $date;
             } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
                 $newdate = date_create(date('Y-m-d'));
                 date_modify($newdate, $date . ' day');
-                $result = date_format($newdate, 'Y-m-d');
+                $result[0] = date_format($newdate, 'Y-m-d');
             } else {
-                $result = date('Y-m-d');
+                $result[0] = date('Y-m-d');
             }
         } else {
-            $result = date('Y-m-d');
+            $result[0] = date('Y-m-d');
         }
         return $result;
     }
+
 }
