@@ -338,8 +338,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $condition3s = true; $condition3d = true;
             if(isset($data['startbefore']) || isset($data['startafter'])) {
                 if(is_object($data['start'])) {
-                    if(is_object($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
-                    if(is_object($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                    if($data['startignore'] != '!') {
+                        if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
+                        if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                    }
                 } else {
                     if(!$data['startignore'] == '*') { $condition3s = false; }
                     if($data['startignore'] == '!') { $condition3s = false; }
@@ -348,13 +350,16 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
             if(isset($data['duebefore']) || isset($data['dueafter'])) {
                 if(is_object($data['due'])) {
-                    if(is_object($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
-                    if(is_object($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                    if($data['dueignore'] != '!') {
+                        if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
+                        if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                    }
                  } else {
                     if(!$data['dueignore'] == '*') { $condition3d = false; }
                     if($data['dueignore'] == '!') { $condition3d = false; }
                 }
             }
+
 
             $condition3 = $condition3s && $condition3d;
         }
