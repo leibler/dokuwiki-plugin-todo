@@ -305,6 +305,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param $todouser string user username of user
      * @return bool if the todoitem should be listed
      */
+    /**
+     * Check the conditions for adding a todoitem
+     *
+     * @param $data     array the defined filters
+     * @param $checked  bool completion status of task; true: finished, false: open
+     * @param $todouser string user username of user
+     * @return bool if the todoitem should be listed
+     */
     private function isRequestedTodo($data) {
         //completion status
         $condition1 = $data['completed'] === 'all' //all
@@ -328,20 +336,24 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //compare start/due dates
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
-            if(!isset($data['start']) && (isset($data['startbefore']) || isset($data['startafter']))) {
-                if(!$data['startignore'] == '!') { $condition3s = false; }
-            } elseif (is_object($data['start']) && (isset($data['startbefore']) || isset($data['startafter']))) {
-                $condition3s = true;
-                if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
-                if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+            if(isset($data['startbefore']) || isset($data['startafter'])) {
+                if(is_object($data['start'])) {
+                    if(is_object($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
+                    if(is_object($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                } else {
+                    if(!$data['startignore'] == '*') { $condition3s = false; }
+                    if($data['startignore'] == '!') { $condition3s = false; }
+                }
             }
 
-            if(!isset($data['due']) && (isset($data['duebefore']) || isset($data['dueafter']))) {
-                if(!$data['dueignore'] == '!') { $condition3d = false; }
-            } elseif (is_object($data['due']) && (isset($data['duebefore']) || isset($data['dueafter']))) {
-                $condition3d = true;
-                if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
-                if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+            if(isset($data['duebefore']) || isset($data['dueafter'])) {
+                if(is_object($data['due'])) {
+                    if(is_object($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
+                    if(is_object($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                 } else {
+                    if(!$data['dueignore'] == '*') { $condition3d = false; }
+                    if($data['dueignore'] == '!') { $condition3d = false; }
+                }
             }
 
             $condition3 = $condition3s && $condition3d;
@@ -349,6 +361,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         return $condition1 AND $condition2 AND $condition3;
     }
+
 
     /**
     * Analyse of relative/absolute Date and return an absolute date
@@ -359,23 +372,30 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function analyseDate($date) {
         $result = array($date, '');
         if(is_string($date)) {
-            if(substr($date, -1) == '!') {
-                $date = substr($date, 0, -1);
-                $result = array($date, '!');
-            }
-            if(date('Y-m-d', strtotime($date)) == $date) {
-                $result[0] = $date;
-            } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
-                $newdate = date_create(date('Y-m-d'));
-                date_modify($newdate, $date . ' day');
-                $result[0] = date_format($newdate, 'Y-m-d');
+            if($date == '!') {
+               $result = array('', '!');
+            } elseif ($date =='*') {
+               $result = array('', '*');
             } else {
-                $result[0] = date('Y-m-d');
+                if(substr($date, -1) == '*') {
+                    $date = substr($date, 0, -1);
+                    $result = array($date, '*');
+                }
+
+                if(date('Y-m-d', strtotime($date)) == $date) {
+                    $result[0] = $date;
+                } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
+                    $newdate = date_create(date('Y-m-d'));
+                    date_modify($newdate, $date . ' day');
+                    $result[0] = date_format($newdate, 'Y-m-d');
+                } else {
+                    $result[0] = date('Y-m-d');
+                }
             }
-        } else {
-            $result[0] = date('Y-m-d');
-        }
+        } else { $result[0] = date('Y-m-d'); }
+
         return $result;
     }
+
 
 }
