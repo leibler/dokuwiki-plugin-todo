@@ -365,8 +365,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     if($data['dueignore'] == '!') { $condition3d = false; }
                 }
             }
+            $condition3 = $condition3s && $condition3d;
+        }
 
-	// compare compleded date
+	// compare completed date
         $condition4 = true;
         if(isset($data['completedbefore'])) {
             $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
