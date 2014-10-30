@@ -122,6 +122,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                  case 'dueafter':
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
+                 case 'completedbefore':
+                    $data['completedbefore'] = $this->analyseDate($value)[0];
+                    break;
+                 case 'completedafter':
+                    $data['completedafter'] = $this->analyseDate($value)[0];
+                    break;
              }
         }
         return $data;
@@ -360,11 +366,16 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 }
             }
 
-
-            $condition3 = $condition3s && $condition3d;
+	// compare compleded date
+        $condition4 = true;
+        if(isset($data['completedbefore'])) {
+            $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
+        }
+        if(isset($data['completedafter'])) {
+            $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
         }
 
-        return $condition1 AND $condition2 AND $condition3;
+        return $condition1 AND $condition2 AND $condition3 AND $condition4;
     }
 
 
