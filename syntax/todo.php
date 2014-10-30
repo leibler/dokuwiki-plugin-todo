@@ -243,6 +243,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $data['checked'] = false;
         unset($data['start']);
         unset($data['due']);
+        unset($data['completeddate']);
 	$data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
         $options = explode(' ', $todoargs);
@@ -252,8 +253,14 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
             }
-            elseif($option[0] == '#') { $data['checked'] = true;
-            }
+            elseif($option[0] == '#') {
+                $data['checked'] = true;
+                @list($completeduser, $completeddate) = explode(':', $option, 2);
+                $data['completeduser'] = substr($completeduser, 1);
+                if(date('Y-m-d', strtotime($completeddate)) == $completeddate) {
+                    $data['completeddate'] = new DateTime($completeddate);
+                }
+	    }
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
