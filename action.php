@@ -174,14 +174,16 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @return string new to-do completed or uncompleted tag e.g. <todo @user #>
      */
     private function _buildTodoTag($todoTag, $checked) {
+        $user = '';
         if($checked == 1) {
-            $newTag = preg_replace('/[#\s]*>/', ' #>', $todoTag);
+            if(!empty($_SERVER['REMOTE_USER'])) { $user = $_SERVER['REMOTE_USER']; }
+            $newTag = preg_replace('/>/', ' #'.$user.':'.date('Y-m-d').'>', $todoTag);
         } else {
-            $newTag = preg_replace('/[#\s]*>/', '>', $todoTag);
+            $newTag = preg_replace('/[\s]*[#].*>/', '>', $todoTag);
         }
-    	
         return $newTag;
     }
+
 
     /**
      * Find position of $occurance-th $needle in haystack
