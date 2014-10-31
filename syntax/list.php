@@ -60,6 +60,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
+            'completeduserlist' => 'all',
             'ns' => 'all',
             'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
@@ -106,6 +107,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 						$data['assigned'][] = '@@MAIL@@';
 					}
                     $data['assigned'] = array_map( array($this,"__todolistTrimUser"), $data['assigned'] );
+                    break;
+                case 'completeduser':
+                    $data['completeduserlist'] = explode(',', $value);
+                                        // @date 20140317 le: if check for logged in user, also check for logged in user email address
+                                        if(in_array('@@USER@@', $data['completeduserlist'])) {
+                                                $data['completeduserlist'][] = '@@MAIL@@';
+                                        }
+                    $data['completeduserlist'] = array_map( array($this,"__todolistTrimUser"), $data['completeduserlist'] );
                     break;
                 case 'ns':
                     $data['ns'] = $value;
@@ -338,6 +347,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             foreach($data['todousers'] as $todouser) {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
+
+        //completed by
+        if($condition2 && is_array($data['completeduserlist']))
+            $condition2 = in_array($data['completeduser'], $data['completeduserlist']);
 
         //compare start/due dates
         if($condition1 && $condition2) {
