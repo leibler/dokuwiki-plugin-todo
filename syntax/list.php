@@ -256,28 +256,28 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function filterpages($todopages, $data) {
         global $ID;
         $pages = array();
+        if ($data['ns'][0] == '.') {
+            if(substr($data['ns'], -1) == ':') {
+                $data['ns'] = substr($ID, 0, strrpos($ID, ':')).':'.substr($data['ns'], 1);
+            } else {
+                $data['ns'] = rtrim(substr($ID, 0, strrpos($ID, ':')).':'.substr($data['ns'], 1), ':');
+            }
+            $data['ns'] = str_replace('::', ':', $data['ns']);
+        }
+
         foreach($todopages as $page) {
             $parsepage = 0;
-            if ($data['ns'][0] == '.') {
-                if(substr($data['ns'], -1) == ':') {
-                    $data['ns'] = $ID.':'.substr($data['ns'], 1);
-                } else {
-                    $data['ns'] = rtrim($ID.':'.substr($data['ns'], 1), ':');
-                }
-                $data['ns'] = str_replace('::', ':', $data['ns']);
-            }
             if ($data['ns'] == 'all') {
                 // Always return the todo pages
                 $parsepage = 1;
             } elseif ($data['ns'] == '/') {
                 // Only return the todo page if it's in the root namespace 
                 if (strpos($page['id'], ':') === FALSE) $parsepage = 1;
-            } elseif (strlen($data['ns']) > 1 && substr($data['ns'], -1) == ':') {
+            } elseif (strlen($page['id']) > strlen($data['ns']) && substr($data['ns'], -1) == ':') {
                 // Only return the todo page if it's in the namespace of the actual page
-                if (substr($page['id'], 0, strlen($ID.':')) === $ID.':') {
+                if (substr($page['id'], 0, strlen($data['ns'])) ===  $data['ns'] && $page['id'] != $ID) {
                     $parsepage = 1;
                 }
-
             } elseif (substr( $page['id'], 0, strlen($data['ns']) ) === $data['ns']) {
                 // Only return the todo page if it starts with the given string
                 $parsepage = 1;
@@ -297,6 +297,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         }
         return $pages;
     }
+
 
     /**
      * Create html for table with todos
