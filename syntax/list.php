@@ -157,6 +157,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         /** @var Doku_Renderer_xhtml $renderer */
 
         $opts['pattern'] = '/<todo([^>]*)>(.*)<\/todo[\W]*?>/'; //all todos in a wiki page
+        $opts['ns'] = $data['ns'];
         //TODO check if storing subpatterns doesn't cost too much resources
 
         // search(&$data, $base,            $func,                       $opts,$dir='',$lvl=1,$sort='natural')
@@ -203,6 +204,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //check ACL
         if(auth_quickaclcheck($item['id']) < AUTH_READ) return false;
 
+        // filter namespaces
+        if(!$this->filter_ns($item['id'], $opts['ns'])) return false;
+
         $wikitext = rawWiki($item['id']); //get wiki text
 
         $item['count'] = preg_match_all($opts['pattern'], $wikitext, $matches); //count how many times appears the pattern
@@ -211,6 +215,44 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $data[] = $item;
         }
         return true;
+    }
+
+    /**
+     * filter namespaces
+     *
+     * @param $todopages array pages with all todoitems
+     * @param $item     string listing parameters
+     * @return boolean if item id is in namespace
+     */
+    private function filter_ns($item, $ns) {
+        global $ID;
+        // check if we should accept currant namespace+subnamespaces or only subnamespaces
+        $wildsubns = substr($ns, -2) == '.:';
+        $onlysubns = !$wildsubns && (substr($ns, -1) == ':' || substr($ns, -2) == ':.');
+//        $onlyns =  $onlysubns && substr($ns, -1) == '.';
+
+        // if first char of ns is '.'replace it with current ns
+        if ($ns[0] == '.') {
+            $ns = substr($ID, 0, strrpos($ID, ':')+1).ltrim($ns, '.:');
+        }
+        $ns = trim($ns, '.:');
+        $len = strlen($ns);
+        $parsepage = false;
+
+        if ($parsepage = $ns == 'all') {
+            // Always return the todo pages
+        } elseif ($ns == '/') {
+            // Only return the todo page if it's in the root namespace 
+            $parsepage = strpos($item, ':') === FALSE;
+        } elseif ($wildsubns) {
+            $p = strpos($item.':', ':', $len+1);
+            $x = substr($item, $len+1, $p-$len);
+            $parsepage = 0 === strpos($item, rtrim($ns.':'.$x, ':').':');
+        } elseif ($onlysubns) {
+            $parsepage = 0 === strpos($item, $ns.':');
+        } elseif ($parsepage = substr($item, 0, $len) == $ns) {
+        }
+        return $parsepage;
     }
 
     /**
@@ -254,54 +296,21 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @return array filtered pages
      */
     private function filterpages($todopages, $data) {
-        global $ID;
         $pages = array();
-        // check if we should accept currant namespace+subnamespaces or only subnamespaces
-        $wildsubns = substr($data['ns'], -2) == '.:';
-        $onlysubns = !$wildsubns && (substr($data['ns'], -1) == ':' || substr($data['ns'], -2) == ':.');
-//        $onlyns =  $onlysubns && substr($data['ns'], -1) == '.';
-
-        // if first char of ns is '.'replace it with current ns
-        if ($data['ns'][0] == '.') {
-            $data['ns'] = substr($ID, 0, strrpos($ID, ':')+1).ltrim($data['ns'], '.:');
-        }
-        $data['ns'] = trim($data['ns'], '.:');
-        $len = strlen($data['ns']);
-
         foreach($todopages as $page) {
-            $parsepage = false;
+            $todos = array();
+            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+            foreach($page['matches'][1] as $todoindex => $todomatch) {
+                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-            if ($parsepage = $data['ns'] == 'all') {
-                // Always return the todo pages
-            } elseif ($data['ns'] == '/') {
-                // Only return the todo page if it's in the root namespace 
-                $parsepage = strpos($page['id'], ':') === FALSE;
-            } elseif ($wildsubns) {
-                $p = strpos($page['id'].':', ':', $len+1);
-                $x = substr($page['id'], $len+1, $p-$len);
-                $parsepage = 0 === strpos($page['id'], rtrim($data['ns'].':'.$x, ':').':');
-            } elseif ($onlysubns) {
-                $parsepage = 0 === strpos($page['id'], $data['ns'].':');
-            } elseif ($parsepage = substr($page['id'], 0, $len) == $data['ns']) {
+                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
             }
-
-            if ($parsepage) {
-                $todos = array();
-                // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
-                foreach($page['matches'][1] as $todoindex => $todomatch) {
-                    $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
-
-                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
-                }
-                if(count($todos) > 0) {
-                    $pages[] = array('id' => $page['id'], 'todos' => $todos);
-                }
+            if(count($todos) > 0) {
+                $pages[] = array('id' => $page['id'], 'todos' => $todos);
             }
         }
         return $pages;
     }
-
-
 
     /**
      * Create html for table with todos
