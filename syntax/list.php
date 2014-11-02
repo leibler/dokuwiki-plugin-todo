@@ -254,15 +254,30 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @return array filtered pages
      */
     private function filterpages($todopages, $data) {
+        global $ID;
         $pages = array();
         foreach($todopages as $page) {
             $parsepage = 0;
+            if ($data['ns'][0] == '.') {
+                if(substr($data['ns'], -1) == ':') {
+                    $data['ns'] = $ID.':'.substr($data['ns'], 1);
+                } else {
+                    $data['ns'] = rtrim($ID.':'.substr($data['ns'], 1), ':');
+                }
+                $data['ns'] = str_replace('::', ':', $data['ns']);
+            }
             if ($data['ns'] == 'all') {
                 // Always return the todo pages
                 $parsepage = 1;
             } elseif ($data['ns'] == '/') {
                 // Only return the todo page if it's in the root namespace 
                 if (strpos($page['id'], ':') === FALSE) $parsepage = 1;
+            } elseif (strlen($data['ns']) > 1 && substr($data['ns'], -1) == ':') {
+                // Only return the todo page if it's in the namespace of the actual page
+                if (substr($page['id'], 0, strlen($ID.':')) === $ID.':') {
+                    $parsepage = 1;
+                }
+
             } elseif (substr( $page['id'], 0, strlen($data['ns']) ) === $data['ns']) {
                 // Only return the todo page if it starts with the given string
                 $parsepage = 1;
@@ -277,7 +292,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 }
                 if(count($todos) > 0) {
                     $pages[] = array('id' => $page['id'], 'todos' => $todos);
-                }              
+                }
             }
         }
         return $pages;
