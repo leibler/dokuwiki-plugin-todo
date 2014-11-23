@@ -60,6 +60,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'header' => $this->getConf("Header"),
             'completed' => 'all',
             'assigned' => 'all',
+            'completeduserlist' => 'all',
             'ns' => 'all',
             'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
@@ -107,20 +108,34 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 					}
                     $data['assigned'] = array_map( array($this,"__todolistTrimUser"), $data['assigned'] );
                     break;
+                case 'completeduser':
+                    $data['completeduserlist'] = explode(',', $value);
+                                        // @date 20140317 le: if check for logged in user, also check for logged in user email address
+                                        if(in_array('@@USER@@', $data['completeduserlist'])) {
+                                                $data['completeduserlist'][] = '@@MAIL@@';
+                                        }
+                    $data['completeduserlist'] = array_map( array($this,"__todolistTrimUser"), $data['completeduserlist'] );
+                    break;
                 case 'ns':
                     $data['ns'] = $value;
                     break;
                 case 'startbefore':
-                    $data['startbefore'] = $this->analyseDate($value);
+                    list($data['startbefore'], $data['startignore']) = $this->analyseDate($value);
                     break;
                 case 'startafter':
-                    $data['startafter'] = $this->analyseDate($value);
+                    list($data['startafter'], $data['startignore']) = $this->analyseDate($value);
                     break;
                  case 'duebefore':
-                    $data['duebefore'] = $this->analyseDate($value);
+                    list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
                  case 'dueafter':
-                    $data['dueafter'] = $this->analyseDate($value);
+                    list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
+                    break;
+                 case 'completedbefore':
+                    $data['completedbefore'] = $this->analyseDate($value)[0];
+                    break;
+                 case 'completedafter':
+                    $data['completedafter'] = $this->analyseDate($value)[0];
                     break;
              }
         }
@@ -142,6 +157,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         /** @var Doku_Renderer_xhtml $renderer */
 
         $opts['pattern'] = '/<todo([^>]*)>(.*)<\/todo[\W]*?>/'; //all todos in a wiki page
+        $opts['ns'] = $data['ns'];
         //TODO check if storing subpatterns doesn't cost too much resources
 
         // search(&$data, $base,            $func,                       $opts,$dir='',$lvl=1,$sort='natural')
@@ -188,6 +204,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //check ACL
         if(auth_quickaclcheck($item['id']) < AUTH_READ) return false;
 
+        // filter namespaces
+        if(!$this->filter_ns($item['id'], $opts['ns'])) return false;
+
         $wikitext = rawWiki($item['id']); //get wiki text
 
         $item['count'] = preg_match_all($opts['pattern'], $wikitext, $matches); //count how many times appears the pattern
@@ -196,6 +215,44 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $data[] = $item;
         }
         return true;
+    }
+
+    /**
+     * filter namespaces
+     *
+     * @param $todopages array pages with all todoitems
+     * @param $item     string listing parameters
+     * @return boolean if item id is in namespace
+     */
+    private function filter_ns($item, $ns) {
+        global $ID;
+        // check if we should accept currant namespace+subnamespaces or only subnamespaces
+        $wildsubns = substr($ns, -2) == '.:';
+        $onlysubns = !$wildsubns && (substr($ns, -1) == ':' || substr($ns, -2) == ':.');
+//        $onlyns =  $onlysubns && substr($ns, -1) == '.';
+
+        // if first char of ns is '.'replace it with current ns
+        if ($ns[0] == '.') {
+            $ns = substr($ID, 0, strrpos($ID, ':')+1).ltrim($ns, '.:');
+        }
+        $ns = trim($ns, '.:');
+        $len = strlen($ns);
+        $parsepage = false;
+
+        if ($parsepage = $ns == 'all') {
+            // Always return the todo pages
+        } elseif ($ns == '/') {
+            // Only return the todo page if it's in the root namespace 
+            $parsepage = strpos($item, ':') === FALSE;
+        } elseif ($wildsubns) {
+            $p = strpos($item.':', ':', $len+1);
+            $x = substr($item, $len+1, $p-$len);
+            $parsepage = 0 === strpos($item, rtrim($ns.':'.$x, ':').':');
+        } elseif ($onlysubns) {
+            $parsepage = 0 === strpos($item, $ns.':');
+        } elseif ($parsepage = substr($item, 0, $len) == $ns) {
+        }
+        return $parsepage;
     }
 
     /**
@@ -241,28 +298,15 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     private function filterpages($todopages, $data) {
         $pages = array();
         foreach($todopages as $page) {
-            $parsepage = 0;
-            if ($data['ns'] == 'all') {
-                // Always return the todo pages
-                $parsepage = 1;
-            } elseif ($data['ns'] == '/') {
-                // Only return the todo page if it's in the root namespace 
-                if (strpos($page['id'], ':') === FALSE) $parsepage = 1;
-            } elseif (substr( $page['id'], 0, strlen($data['ns']) ) === $data['ns']) {
-                // Only return the todo page if it starts with the given string
-                $parsepage = 1;
-            }
-            if ($parsepage == 1) {
-                $todos = array();
-                // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
-                foreach($page['matches'][1] as $todoindex => $todomatch) {
-                    $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
+            $todos = array();
+            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+            foreach($page['matches'][1] as $todoindex => $todomatch) {
+                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
-                }
-                if(count($todos) > 0) {
-                    $pages[] = array('id' => $page['id'], 'todos' => $todos);
-                }              
+                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+            }
+            if(count($todos) > 0) {
+                $pages[] = array('id' => $page['id'], 'todos' => $todos);
             }
         }
         return $pages;
@@ -305,6 +349,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param $todouser string user username of user
      * @return bool if the todoitem should be listed
      */
+    /**
+     * Check the conditions for adding a todoitem
+     *
+     * @param $data     array the defined filters
+     * @param $checked  bool completion status of task; true: finished, false: open
+     * @param $todouser string user username of user
+     * @return bool if the todoitem should be listed
+     */
     private function isRequestedTodo($data) {
         //completion status
         $condition1 = $data['completed'] === 'all' //all
@@ -325,41 +377,85 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
 
+        //completed by
+        if($condition2 && is_array($data['completeduserlist']))
+            $condition2 = in_array($data['completeduser'], $data['completeduserlist']);
+
         //compare start/due dates
-        if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['duebefore']) || isset($data['dueafter'])) {
-            $condition3 = false;
-            if((isset($data['startbefore']) && isset($data['start'])) || (isset($data['startafter']) && isset($data['start']))
-              || (isset($data['duebefore']) && isset($data['due'])) || (isset($data['dueafter']) && isset($data['due']))) {
-                $condition3 = true;
-                if(isset($data['startbefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['start']; }
-                if(isset($data['startafter'])) { $condition3 = $condition3 && new DateTime($data['startafter']) < $data['start']; }
-                if(isset($data['duebefore'])) { $condition3 = $condition3 && new DateTime($data['startbefore']) > $data['due']; }
-                if(isset($data['dueafter'])) { $condition3 = $condition3 && new DateTime($data['duebefore']) < $data['due']; }
+        if($condition1 && $condition2) {
+            $condition3s = true; $condition3d = true;
+            if(isset($data['startbefore']) || isset($data['startafter'])) {
+                if(is_object($data['start'])) {
+                    if($data['startignore'] != '!') {
+                        if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
+                        if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                    }
+                } else {
+                    if(!$data['startignore'] == '*') { $condition3s = false; }
+                    if($data['startignore'] == '!') { $condition3s = false; }
+                }
             }
-        } else { $condition3 = true; }
-        return $condition1 AND $condition2 AND $condition3;
+
+            if(isset($data['duebefore']) || isset($data['dueafter'])) {
+                if(is_object($data['due'])) {
+                    if($data['dueignore'] != '!') {
+                        if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
+                        if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                    }
+                 } else {
+                    if(!$data['dueignore'] == '*') { $condition3d = false; }
+                    if($data['dueignore'] == '!') { $condition3d = false; }
+                }
+            }
+            $condition3 = $condition3s && $condition3d;
+        }
+
+	// compare completed date
+        $condition4 = true;
+        if(isset($data['completedbefore'])) {
+            $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
+        }
+        if(isset($data['completedafter'])) {
+            $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
+        }
+
+        return $condition1 AND $condition2 AND $condition3 AND $condition4;
     }
+
 
     /**
     * Analyse of relative/absolute Date and return an absolute date
     *
-    * @param $date	string	absolute/relative value of the date to analyse
-    * @return 		string   absolute date or actual date if $date is invalid
+    * @param $date      string  absolute/relative value of the date to analyse
+    * @return           array   absolute date or actual date if $date is invalid
     */
     private function analyseDate($date) {
+        $result = array($date, '');
         if(is_string($date)) {
-            if(date('Y-m-d', strtotime($date)) == $date) {
-                $result = $date;
-            } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
-                $newdate = date_create(date('Y-m-d'));
-                date_modify($newdate, $date . ' day');
-                $result = date_format($newdate, 'Y-m-d');
+            if($date == '!') {
+               $result = array('', '!');
+            } elseif ($date =='*') {
+               $result = array('', '*');
             } else {
-                $result = date('Y-m-d');
+                if(substr($date, -1) == '*') {
+                    $date = substr($date, 0, -1);
+                    $result = array($date, '*');
+                }
+
+                if(date('Y-m-d', strtotime($date)) == $date) {
+                    $result[0] = $date;
+                } elseif(preg_match('/^[\+\-]\d+$/', $date)) { // check if we have a valid relative value
+                    $newdate = date_create(date('Y-m-d'));
+                    date_modify($newdate, $date . ' day');
+                    $result[0] = date_format($newdate, 'Y-m-d');
+                } else {
+                    $result[0] = date('Y-m-d');
+                }
             }
-        } else {
-            $result = date('Y-m-d');
-        }
+        } else { $result[0] = date('Y-m-d'); }
+
         return $result;
     }
+
+
 }
