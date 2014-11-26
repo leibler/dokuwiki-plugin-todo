@@ -132,10 +132,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
                  case 'completedbefore':
-                    $data['completedbefore'] = $this->analyseDate($value)[0];
+                    list($data['completedbefore']) = $this->analyseDate($value);
                     break;
                  case 'completedafter':
-                    $data['completedafter'] = $this->analyseDate($value)[0];
+                    list($data['completedafter']) = $this->analyseDate($value);
                     break;
              }
         }
