@@ -209,6 +209,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         $wikitext = rawWiki($item['id']); //get wiki text
 
+        // check if ~~NOTODO~~ is set on the page to skip this page
+        if(1 == preg_match('/~~NOTODO~~/', $wikitext)) return false;
+
         $item['count'] = preg_match_all($opts['pattern'], $wikitext, $matches); //count how many times appears the pattern
         if(!empty($item['count'])) { //if it appears at least once
             $item['matches'] = $matches;
