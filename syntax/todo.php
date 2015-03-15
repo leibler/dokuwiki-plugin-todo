@@ -141,6 +141,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     public function connectTo($mode) {
         $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo_todo');
+        $this->Lexer->addSpecialPattern('~~NOTODO~~', $mode, 'plugin_todo_todo');
     }
 
     public function postConnect() {
