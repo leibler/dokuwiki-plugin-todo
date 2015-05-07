@@ -142,6 +142,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     break;
                  case 'completedafter':
                     list($data['completedafter']) = $this->analyseDate($value);
+                    break;
              }
         }
         return $data;
