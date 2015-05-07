@@ -65,6 +65,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
             'username' => $this->getConf("Username"),
+            'short' => false,
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
@@ -73,6 +74,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             	case 'header': // how should the header be rendered?
                     if(in_array($value, array('id', 'firstheader', 'none'))) {
                         $data['header'] = $value;
+                    }
+                    break;
+                case 'short':
+                    if(in_array($value, $allowedvalues)) {
+                        $data['short'] = ($value == 'yes');
                     }
                     break;
                 case 'showdate':
@@ -165,7 +171,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         $todopages = $this->filterpages($todopages, $data);
 
-        $this->htmlTodoTable($renderer, $todopages, $data);
+        if($data['short']) {
+            $this->htmlShort($renderer, $todopages, $data);
+        } else {
+            $this->htmlTodoTable($renderer, $todopages, $data);
+        }
 
         return true;
     }
@@ -313,6 +323,23 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
         }
         return $pages;
+    }
+
+    private function htmlShort($R, $todopages, $data) {
+        $done = 0; $todo = 0;
+//echo "<pre>";
+//print_r($todopages);
+//die;
+        foreach($todopages as $page) {
+            foreach($page['todos'] as $value) {
+                $todo++;
+                if ($value['checked']) {
+                    $done++;
+                }
+            }
+        }
+
+        $R->cdata("($done/$todo)");
     }
 
     /**
