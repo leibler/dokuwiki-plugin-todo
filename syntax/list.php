@@ -52,7 +52,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param Doku_Handler $handler The handler
      * @return array Data for the renderer
      */
-    public function handle($match, $state, $pos, Doku_Handler &$handler) {
+    public function handle($match, $state, $pos, Doku_Handler $handler) {
 
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
@@ -156,7 +156,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param array $data The data from the handler() function
      * @return bool If rendering was successful.
      */
-    public function render($mode, Doku_Renderer &$renderer, $data) {
+    public function render($mode, Doku_Renderer $renderer, $data) {
         global $conf;
 
         if($mode != 'xhtml') return false;
