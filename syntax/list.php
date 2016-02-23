@@ -131,17 +131,26 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 case 'startafter':
                     list($data['startafter'], $data['startignore']) = $this->analyseDate($value);
                     break;
+                case 'startat':
+                    list($data['startat'], $data['startignore']) = $this->analyseDate($value);
+                    break;
                  case 'duebefore':
                     list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
                  case 'dueafter':
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
+                 case 'dueat':
+                    list($data['dueat'], $data['dueignore']) = $this->analyseDate($value);
+                    break;
                  case 'completedbefore':
                     list($data['completedbefore']) = $this->analyseDate($value);
                     break;
                  case 'completedafter':
                     list($data['completedafter']) = $this->analyseDate($value);
+                    break;
+                 case 'completedat':
+                    list($data['completedat']) = $this->analyseDate($value);
                     break;
              }
         }
@@ -414,11 +423,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //compare start/due dates
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
-            if(isset($data['startbefore']) || isset($data['startafter'])) {
+            if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
                 if(is_object($data['start'])) {
                     if($data['startignore'] != '!') {
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                        if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $data['start']; }
                     }
                 } else {
                     if(!$data['startignore'] == '*') { $condition3s = false; }
@@ -426,11 +436,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 }
             }
 
-            if(isset($data['duebefore']) || isset($data['dueafter'])) {
+            if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
                 if(is_object($data['due'])) {
                     if($data['dueignore'] != '!') {
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                        if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $data['due']; }
                     }
                  } else {
                     if(!$data['dueignore'] == '*') { $condition3d = false; }
@@ -447,6 +458,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         }
         if(isset($data['completedafter'])) {
             $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
+        }
+        if(isset($data['completedat'])) {
+            $condition4 = $condition4 && new DateTime($data['completedat']) == $data['completeddate'];
         }
 
         return $condition1 AND $condition2 AND $condition3 AND $condition4;
