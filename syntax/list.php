@@ -300,20 +300,24 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      */
     private function filterpages($todopages, $data) {
         $pages = array();
-        foreach($todopages as $page) {
-            $todos = array();
-            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
-            foreach($page['matches'][1] as $todoindex => $todomatch) {
-                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
+        if(count($todopages)>0) {
+            foreach($todopages as $page) {
+                $todos = array();
+                // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+                foreach($page['matches'][1] as $todoindex => $todomatch) {
+                    $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                }
+                if(count($todos) > 0) {
+                    $pages[] = array('id' => $page['id'], 'todos' => $todos);
+                }
             }
-            if(count($todos) > 0) {
-                $pages[] = array('id' => $page['id'], 'todos' => $todos);
-            }
+            return $pages;
         }
-        return $pages;
+    return null;
     }
+
 
     /**
      * Create html for table with todos
