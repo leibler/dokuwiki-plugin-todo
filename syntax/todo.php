@@ -157,7 +157,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
      * @return int The current lexer state for the match.
      */
-    public function handle($match, $state, $pos, Doku_Handler &$handler) {
+    public function handle($match, $state, $pos, Doku_Handler $handler) {
         switch($state) {
             case DOKU_LEXER_ENTER :
                 #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
@@ -212,7 +212,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param  $data     Array         The data created by the <tt>handle()</tt> method.
      * @return Boolean true: if rendered successfully, or false: otherwise.
      */
-    public function render($mode, Doku_Renderer &$renderer, $data) {
+    public function render($mode, Doku_Renderer $renderer, $data) {
         global $ID;
         list($state, $todotitle) = $data;
         if($mode == 'xhtml') {

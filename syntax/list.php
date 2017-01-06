@@ -52,7 +52,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param Doku_Handler $handler The handler
      * @return array Data for the renderer
      */
-    public function handle($match, $state, $pos, Doku_Handler &$handler) {
+    public function handle($match, $state, $pos, Doku_Handler $handler) {
 
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
@@ -131,17 +131,26 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 case 'startafter':
                     list($data['startafter'], $data['startignore']) = $this->analyseDate($value);
                     break;
+                case 'startat':
+                    list($data['startat'], $data['startignore']) = $this->analyseDate($value);
+                    break;
                  case 'duebefore':
                     list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
                  case 'dueafter':
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
+                 case 'dueat':
+                    list($data['dueat'], $data['dueignore']) = $this->analyseDate($value);
+                    break;
                  case 'completedbefore':
                     list($data['completedbefore']) = $this->analyseDate($value);
                     break;
                  case 'completedafter':
                     list($data['completedafter']) = $this->analyseDate($value);
+                    break;
+                 case 'completedat':
+                    list($data['completedat']) = $this->analyseDate($value);
                     break;
              }
         }
@@ -156,7 +165,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param array $data The data from the handler() function
      * @return bool If rendering was successful.
      */
-    public function render($mode, Doku_Renderer &$renderer, $data) {
+    public function render($mode, Doku_Renderer $renderer, $data) {
         global $conf;
 
         if($mode != 'xhtml') return false;
@@ -310,20 +319,24 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      */
     private function filterpages($todopages, $data) {
         $pages = array();
-        foreach($todopages as $page) {
-            $todos = array();
-            // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
-            foreach($page['matches'][1] as $todoindex => $todomatch) {
-                $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
+        if(count($todopages)>0) {
+            foreach($todopages as $page) {
+                $todos = array();
+                // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
+                foreach($page['matches'][1] as $todoindex => $todomatch) {
+                    $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-                if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                }
+                if(count($todos) > 0) {
+                    $pages[] = array('id' => $page['id'], 'todos' => $todos);
+                }
             }
-            if(count($todos) > 0) {
-                $pages[] = array('id' => $page['id'], 'todos' => $todos);
-            }
+            return $pages;
         }
-        return $pages;
+    return null;
     }
+
 
     private function htmlShort($R, $todopages, $data) {
         $done = 0; $todo = 0;
@@ -414,11 +427,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //compare start/due dates
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
-            if(isset($data['startbefore']) || isset($data['startafter'])) {
+            if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
                 if(is_object($data['start'])) {
                     if($data['startignore'] != '!') {
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                        if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $data['start']; }
                     }
                 } else {
                     if(!$data['startignore'] == '*') { $condition3s = false; }
@@ -426,11 +440,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 }
             }
 
-            if(isset($data['duebefore']) || isset($data['dueafter'])) {
+            if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
                 if(is_object($data['due'])) {
                     if($data['dueignore'] != '!') {
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                        if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $data['due']; }
                     }
                  } else {
                     if(!$data['dueignore'] == '*') { $condition3d = false; }
@@ -447,6 +462,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         }
         if(isset($data['completedafter'])) {
             $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
+        }
+        if(isset($data['completedat'])) {
+            $condition4 = $condition4 && new DateTime($data['completedat']) == $data['completeddate'];
         }
 
         return $condition1 AND $condition2 AND $condition3 AND $condition4;
