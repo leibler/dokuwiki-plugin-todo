@@ -33,7 +33,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             'type' => 'format',
             'title' => $this->getLang('qb_todobutton'),
             'icon' => '../../plugins/todo/todo.png',
-            'key' => 't',
+// key 't' is already used for going to top of page, bug #76
+//	    'key' => 't',
             'open' => '<todo>',
             'close' => '</todo>',
             'block' => false,
