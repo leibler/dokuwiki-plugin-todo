@@ -71,7 +71,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
-            	case 'header': // how should the header be rendered?
+                case 'header': // how should the header be rendered?
                     if(in_array($value, array('id', 'firstheader', 'none'))) {
                         $data['header'] = $value;
                     }
@@ -108,10 +108,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     }
                     //assigned?
                     $data['assigned'] = explode(',', $value);
-					// @date 20140317 le: if check for logged in user, also check for logged in user email address
-					if( in_array( '@@USER@@', $data['assigned'] ) ) {
-						$data['assigned'][] = '@@MAIL@@';
-					}
+                    // @date 20140317 le: if check for logged in user, also check for logged in user email address
+                    if( in_array( '@@USER@@', $data['assigned'] ) ) {
+                        $data['assigned'][] = '@@MAIL@@';
+                    }
                     $data['assigned'] = array_map( array($this,"__todolistTrimUser"), $data['assigned'] );
                     break;
                 case 'completeduser':
@@ -134,22 +134,22 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 case 'startat':
                     list($data['startat'], $data['startignore']) = $this->analyseDate($value);
                     break;
-                 case 'duebefore':
+                case 'duebefore':
                     list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
-                 case 'dueafter':
+                case 'dueafter':
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
-                 case 'dueat':
+                case 'dueat':
                     list($data['dueat'], $data['dueignore']) = $this->analyseDate($value);
                     break;
-                 case 'completedbefore':
+                case 'completedbefore':
                     list($data['completedbefore']) = $this->analyseDate($value);
                     break;
-                 case 'completedafter':
+                case 'completedafter':
                     list($data['completedafter']) = $this->analyseDate($value);
                     break;
-                 case 'completedat':
+                case 'completedat':
                     list($data['completedat']) = $this->analyseDate($value);
                     break;
              }
@@ -455,7 +455,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $condition3 = $condition3s && $condition3d;
         }
 
-	// compare completed date
+        // compare completed date
         $condition4 = true;
         if(isset($data['completedbefore'])) {
             $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
