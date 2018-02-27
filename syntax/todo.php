@@ -313,7 +313,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
-            . ($checked ? 'checked="checked"' : '') . ' /> ';
+            . ($checked ? ' checked="checked"' : '') . ' /> ';
         }
 
         // Username of first todouser in list
