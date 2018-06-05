@@ -157,7 +157,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
      * @return int The current lexer state for the match.
      */
-    public function handle($match, $state, $pos, Doku_Handler &$handler) {
+    public function handle($match, $state, $pos, Doku_Handler $handler) {
         switch($state) {
             case DOKU_LEXER_ENTER :
                 #Search to see if the '#' is in the todotag (if so, this means the Action has been completed)
@@ -212,7 +212,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param  $data     Array         The data created by the <tt>handle()</tt> method.
      * @return Boolean true: if rendered successfully, or false: otherwise.
      */
-    public function render($mode, Doku_Renderer &$renderer, $data) {
+    public function render($mode, Doku_Renderer $renderer, $data) {
         global $ID;
         list($state, $todotitle) = $data;
         if($mode == 'xhtml') {
@@ -245,7 +245,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
-	$data['showdate'] = $this->getConf("ShowdateTag");
+        $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
@@ -261,7 +261,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 if(date('Y-m-d', strtotime($completeddate)) == $completeddate) {
                     $data['completeddate'] = new DateTime($completeddate);
                 }
-	    }
+            }
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
@@ -280,7 +280,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                             $data['due'] = new DateTime($value);
                         }
                         break;
-		    case 'showdate':
+                    case 'showdate':
                         if(in_array($value, array('yes', 'no'))) {
                             $data['showdate'] = ($value == 'yes');
                         }
@@ -313,7 +313,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
-            . ($checked ? 'checked="checked"' : '') . ' /> ';
+            . ($checked ? ' checked="checked"' : '') . ' /> ';
         }
 
         // Username of first todouser in list

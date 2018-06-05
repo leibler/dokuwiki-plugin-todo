@@ -52,7 +52,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param Doku_Handler $handler The handler
      * @return array Data for the renderer
      */
-    public function handle($match, $state, $pos, Doku_Handler &$handler) {
+    public function handle($match, $state, $pos, Doku_Handler $handler) {
 
         $options = substr($match, 10, -2); // strip markup
         $options = explode(' ', $options);
@@ -65,14 +65,20 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             'showdate' => $this->getConf("ShowdateList"),
             'checkbox' => $this->getConf("Checkbox"),
             'username' => $this->getConf("Username"),
+            'short' => false,
         );
         $allowedvalues = array('yes', 'no');
         foreach($options as $option) {
             @list($key, $value) = explode(':', $option, 2);
             switch($key) {
-            	case 'header': // how should the header be rendered?
+                case 'header': // how should the header be rendered?
                     if(in_array($value, array('id', 'firstheader', 'none'))) {
                         $data['header'] = $value;
+                    }
+                    break;
+                case 'short':
+                    if(in_array($value, $allowedvalues)) {
+                        $data['short'] = ($value == 'yes');
                     }
                     break;
                 case 'showdate':
@@ -102,10 +108,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     }
                     //assigned?
                     $data['assigned'] = explode(',', $value);
-					// @date 20140317 le: if check for logged in user, also check for logged in user email address
-					if( in_array( '@@USER@@', $data['assigned'] ) ) {
-						$data['assigned'][] = '@@MAIL@@';
-					}
+                    // @date 20140317 le: if check for logged in user, also check for logged in user email address
+                    if( in_array( '@@USER@@', $data['assigned'] ) ) {
+                        $data['assigned'][] = '@@MAIL@@';
+                    }
                     $data['assigned'] = array_map( array($this,"__todolistTrimUser"), $data['assigned'] );
                     break;
                 case 'completeduser':
@@ -125,17 +131,26 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 case 'startafter':
                     list($data['startafter'], $data['startignore']) = $this->analyseDate($value);
                     break;
-                 case 'duebefore':
+                case 'startat':
+                    list($data['startat'], $data['startignore']) = $this->analyseDate($value);
+                    break;
+                case 'duebefore':
                     list($data['duebefore'], $data['dueignore']) = $this->analyseDate($value);
                     break;
-                 case 'dueafter':
+                case 'dueafter':
                     list($data['dueafter'], $data['dueignore']) = $this->analyseDate($value);
                     break;
-                 case 'completedbefore':
+                case 'dueat':
+                    list($data['dueat'], $data['dueignore']) = $this->analyseDate($value);
+                    break;
+                case 'completedbefore':
                     list($data['completedbefore']) = $this->analyseDate($value);
                     break;
-                 case 'completedafter':
+                case 'completedafter':
                     list($data['completedafter']) = $this->analyseDate($value);
+                    break;
+                case 'completedat':
+                    list($data['completedat']) = $this->analyseDate($value);
                     break;
              }
         }
@@ -150,7 +165,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param array $data The data from the handler() function
      * @return bool If rendering was successful.
      */
-    public function render($mode, Doku_Renderer &$renderer, $data) {
+    public function render($mode, Doku_Renderer $renderer, $data) {
         global $conf;
 
         if($mode != 'xhtml') return false;
@@ -165,7 +180,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         $todopages = $this->filterpages($todopages, $data);
 
-        $this->htmlTodoTable($renderer, $todopages, $data);
+        if($data['short']) {
+            $this->htmlShort($renderer, $todopages, $data);
+        } else {
+            $this->htmlTodoTable($renderer, $todopages, $data);
+        }
 
         return true;
     }
@@ -319,6 +338,24 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
     }
 
 
+    private function htmlShort($R, $todopages, $data) {
+        $done = 0; $todo = 0;
+//echo "<pre>";
+//print_r($todopages);
+//die;
+        foreach($todopages as $page) {
+            foreach($page['todos'] as $value) {
+                $todo++;
+                if ($value['checked']) {
+                    $done++;
+                }
+            }
+            return $pages;
+        }
+
+        $R->cdata("($done/$todo)");
+    }
+
     /**
      * Create html for table with todos
      *
@@ -391,11 +428,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         //compare start/due dates
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
-            if(isset($data['startbefore']) || isset($data['startafter'])) {
+            if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
                 if(is_object($data['start'])) {
                     if($data['startignore'] != '!') {
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
+                        if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $data['start']; }
                     }
                 } else {
                     if(!$data['startignore'] == '*') { $condition3s = false; }
@@ -403,11 +441,12 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 }
             }
 
-            if(isset($data['duebefore']) || isset($data['dueafter'])) {
+            if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
                 if(is_object($data['due'])) {
                     if($data['dueignore'] != '!') {
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
+                        if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $data['due']; }
                     }
                  } else {
                     if(!$data['dueignore'] == '*') { $condition3d = false; }
@@ -417,13 +456,16 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $condition3 = $condition3s && $condition3d;
         }
 
-	// compare completed date
+        // compare completed date
         $condition4 = true;
         if(isset($data['completedbefore'])) {
             $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
         }
         if(isset($data['completedafter'])) {
             $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
+        }
+        if(isset($data['completedat'])) {
+            $condition4 = $condition4 && new DateTime($data['completedat']) == $data['completeddate'];
         }
 
         return $condition1 AND $condition2 AND $condition3 AND $condition4;
