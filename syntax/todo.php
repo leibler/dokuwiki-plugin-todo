@@ -319,15 +319,18 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         // Username of first todouser in list
         if($todouser && $data['username'] != 'none') {
             switch ($data['username']) {
-                case "user": break;
-                case "real":
-                    if(!($todouser = userlink($todouser, true))) { //only if the user exists
-                        $todouser = $data['todousers'][0];
-                    }
+                case "user":
                     break;
-                case "none": unset($todouser); break;
+                case "real":
+                    $todouser = userlink($todouser, true);
+                    break;
+                case "none": 
+                    unset($todouser); 
+                    break;
             }
-            $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
+            if($todouser) {
+                $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
+            }
         }
 
         // start/due date
