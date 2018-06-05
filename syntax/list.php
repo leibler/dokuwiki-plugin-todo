@@ -340,9 +340,6 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
     private function htmlShort($R, $todopages, $data) {
         $done = 0; $todo = 0;
-//echo "<pre>";
-//print_r($todopages);
-//die;
         foreach($todopages as $page) {
             foreach($page['todos'] as $value) {
                 $todo++;
@@ -385,14 +382,6 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $R->table_close();
     }
 
-    /**
-     * Check the conditions for adding a todoitem
-     *
-     * @param $data     array the defined filters
-     * @param $checked  bool completion status of task; true: finished, false: open
-     * @param $todouser string user username of user
-     * @return bool if the todoitem should be listed
-     */
     /**
      * Check the conditions for adding a todoitem
      *
