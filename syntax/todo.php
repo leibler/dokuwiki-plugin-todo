@@ -322,7 +322,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 case "user":
                     break;
                 case "real":
-                    $todouser = userlink($todouser, true);
+                    global $auth;
+                    $todouser = $auth->getUserData($todouser)['name'];
                     break;
                 case "none": 
                     unset($todouser); 
