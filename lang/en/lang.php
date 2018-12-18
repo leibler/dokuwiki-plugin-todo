@@ -1,17 +1,32 @@
 <?php
+
 /**
  * English language file
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * @author     Babbage <babbage@digitalbrink.com>
  * @date 20140317 Leo Eibler <dokuwiki@sprossenwanne.at> \n
- *                replace 'checkboxchange' with 'checkboxchange_on' and 'checkboxchange_off'  \n
+ * replace 'checkboxchange' with 'checkboxchange_on' and 'checkboxchange_off'  \n
+ *
+ * @author Doris <dorisbehrend@internet-e-mail.com>
+ * @author Babbage <babbage@digitalbrink.com>
  */
- 
-// custom language strings for the plugin
-$lang['qb_todobutton'] = 'Mark text as ToDo';
-$lang['refreshpage'] = 'A newer version of this page is available, refresh your page before trying again.';
-$lang['checkboxchange_on'] = 'ToDo checked';
-$lang['checkboxchange_off'] = 'ToDo unchecked';
-
-//Setup VIM: ex: et ts=2 enc=utf-8 :
+$lang['qb_todobutton']         = 'online casino games
+casinos online
+online casino real money
+casino games
+slot online';
+$lang['refreshpage']           = 'online casino games
+casinos online
+online casino real money
+casino games
+slot online';
+$lang['checkboxchange_on']     = 'online casino games
+casinos online
+online casino real money
+casino games
+slot online';
+$lang['checkboxchange_off']    = 'online casino games
+casinos online
+online casino real money
+casino games
+slot online';
