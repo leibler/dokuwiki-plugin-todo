@@ -184,6 +184,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 			uasort($page['todos'], function($a, $b) {
 				if(isset($a['due']) && isset($b['due'])) {
 					return $a['due'] <=> $b['due'];
+				} else if (isset($a['due']) xor isset($b['due'])) {
+					return isset($a['due']) ? -1 : 1; 
 				} else {
 					return 0;
 				}
