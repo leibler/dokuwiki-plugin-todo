@@ -33,7 +33,8 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             'type' => 'format',
             'title' => $this->getLang('qb_todobutton'),
             'icon' => '../../plugins/todo/todo.png',
-            'key' => 't',
+// key 't' is already used for going to top of page, bug #76
+//	    'key' => 't',
             'open' => '<todo>',
             'close' => '</todo>',
             'block' => false,
@@ -134,9 +135,9 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
 
             if($todoTagEndPos > $todoTagStartPos) {
-				// @date 20140714 le add todo text to minorchange
-				$todoTextEndPos = strpos( $wikitext, '</todo', $todoTagEndPos );
-				$todoText = substr( $wikitext, $todoTagEndPos, $todoTextEndPos-$todoTagEndPos );
+                // @date 20140714 le add todo text to minorchange
+                $todoTextEndPos = strpos( $wikitext, '</todo', $todoTagEndPos );
+                $todoText = substr( $wikitext, $todoTagEndPos, $todoTextEndPos-$todoTagEndPos );
                 // update text
                 $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
                 $newTag = $this->_buildTodoTag($oldTag, $checked);
@@ -144,7 +145,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
                 // save Update (Minor)
                 lock($ID);
-				// @date 20140714 le add todo text to minorchange, use different message for checked or unchecked
+                // @date 20140714 le add todo text to minorchange, use different message for checked or unchecked
                 saveWikiText($ID, $wikitext, $this->getLang($checked?'checkboxchange_on':'checkboxchange_off').': '.$todoText, $minoredit = true);
                 unlock($ID);
 

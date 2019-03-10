@@ -154,7 +154,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param $match    string  The text matched by the patterns.
      * @param $state    int     The lexer state for the match.
      * @param $pos      int     The character position of the matched text.
-     * @param &$handler Doku_Handler  Reference to the Doku_Handler object.
+     * @param $handler Doku_Handler  Reference to the Doku_Handler object.
      * @return int The current lexer state for the match.
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
@@ -208,7 +208,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * Handle the actual output creation.
      *
      * @param  $mode     String        The output format to generate.
-     * @param &$renderer Doku_Renderer A reference to the renderer object.
+     * @param $renderer Doku_Renderer A reference to the renderer object.
      * @param  $data     Array         The data created by the <tt>handle()</tt> method.
      * @return Boolean true: if rendered successfully, or false: otherwise.
      */
@@ -245,7 +245,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
-	$data['showdate'] = $this->getConf("ShowdateTag");
+        $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
@@ -261,7 +261,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 if(date('Y-m-d', strtotime($completeddate)) == $completeddate) {
                     $data['completeddate'] = new DateTime($completeddate);
                 }
-	    }
+            }
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
@@ -280,7 +280,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                             $data['due'] = new DateTime($value);
                         }
                         break;
-		    case 'showdate':
+                    case 'showdate':
                         if(in_array($value, array('yes', 'no'))) {
                             $data['showdate'] = ($value == 'yes');
                         }
@@ -292,12 +292,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
     }
 
     /**
-     * @param Doku_Renderer_xhtml &$renderer
+     * @param Doku_Renderer_xhtml $renderer
      * @param string $id of page
      * @param array  $data  data for rendering options
      * @return string html of an item
      */
-    protected function createTodoItem(&$renderer, $id, $data) {
+    protected function createTodoItem($renderer, $id, $data) {
         //set correct context
         global $ID, $INFO;
         $oldID = $ID;
@@ -313,21 +313,25 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
             . ' data-strikethrough="' . ($this->getConf("Strikethrough") ? '1' : '0') . '"'
-            . ($checked ? 'checked="checked"' : '') . ' /> ';
+            . ($checked ? ' checked="checked"' : '') . ' /> ';
         }
 
         // Username of first todouser in list
         if($todouser && $data['username'] != 'none') {
             switch ($data['username']) {
-                case "user": break;
-                case "real":
-                    if(!($todouser = userlink($todouser, true))) { //only if the user exists
-                        $todouser = $data['todousers'][0];
-                    }
+                case "user":
                     break;
-                case "none": unset($todouser); break;
+                case "real":
+                    global $auth;
+                    $todouser = $auth->getUserData($todouser)['name'];
+                    break;
+                case "none": 
+                    unset($todouser); 
+                    break;
             }
-            $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
+            if($todouser) {
+                $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
+            }
         }
 
         // start/due date
@@ -381,12 +385,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
     /**
      * Generate links from our Actions if necessary.
      *
-     * @param Doku_Renderer_xhtml &$renderer
+     * @param Doku_Renderer_xhtml $renderer
      * @param string $pagename
      * @param string $name
      * @return string
      */
-    private function _createLink(&$renderer, $pagename, $name = NULL) {
+    private function _createLink($renderer, $pagename, $name = NULL) {
         $id = $this->_composePageid($pagename);
 
         return $renderer->internallink($id, $name, null, true);
@@ -434,7 +438,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      *                                  outputvalue ($value) and output it instead of searchpattern
      *                intable:suffix  = on the right side of table - THIS plugin will output a suffix footer and
      *                                  searchpattern will continue it's default output
-     * @param Doku_Renderer_xhtml &$renderer current rendering object (use $renderer->doc .= 'text' to output text)
+     * @param Doku_Renderer_xhtml $renderer current rendering object (use $renderer->doc .= 'text' to output text)
      * @param array $data     whole data multidemensional array( array( $page => $countOfMatches ), ... )
      * @param array $matches  whole regex matches multidemensional array( array( 0 => '1st Match', 1 => '2nd Match', ... ), ... )
      * @param string $page     id of current page
@@ -442,7 +446,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param string $value    value which should be outputted by searchpattern
      * @return bool true if THIS method is responsible for the output (using $renderer->doc) OR false if searchpattern should output it's default
      */
-    public function _searchpatternHandler($type, &$renderer, $data, $matches, $params = array(), $page = null, $value = null) {
+    public function _searchpatternHandler($type, $renderer, $data, $matches, $params = array(), $page = null, $value = null) {
         $renderer->nocache();
 
         $type = strtolower($type);
