@@ -171,7 +171,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         if($mode != 'xhtml') return false;
         /** @var Doku_Renderer_xhtml $renderer */
 
-        $opts['pattern'] = '/<todo([^>]*)>(.*)<\/todo[\W]*?>/'; //all todos in a wiki page
+        $opts['pattern'] = '/<todo([^>]*)>(.*?)<\/todo[\W]*?>/'; //all todos in a wiki page
         $opts['ns'] = $data['ns'];
         //TODO check if storing subpatterns doesn't cost too much resources
 
