@@ -264,6 +264,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         if($todouser!='') {
             $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
+        if(isset($data['completeduser']) && ($checkeduser=$this->_prepUsername($data['completeduser'],$data['username']))!='') {
+            $return .= '<span class="todouser">[' . hsc('✓ '.$checkeduser);
+            if(isset($data['completeddate'])) { $return .= ', '.$data['completeddate']->format('Y-m-d'); }
+            $return .= ']</span>';
+        }
 
         // start/due date
         unset($bg);
