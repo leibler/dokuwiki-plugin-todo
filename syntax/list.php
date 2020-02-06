@@ -366,7 +366,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
        	    if ($data['header']!='none') {
                 $R->tablerow_open();
                 $R->tableheader_open();
-                $R->internallink($page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
+                $R->internallink(':'.$page['id'], ($data['header']=='firstheader' ? p_get_first_heading($page['id']) : $page['id']));
                 $R->tableheader_close();
                 $R->tablerow_close();
        	    }
