@@ -26,73 +26,9 @@
  * do not forget the no-cache option
  *     ~~NOCACHE~~
  *
- * Compatibility:
- *     Release 2013-03-06 "Weatherwax RC1"
- *     Release 2012-10-13 "Adora Belle"
  *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Babbage <babbage@digitalbrink.com>; Leo Eibler <dokuwiki@sprossenwanne.at>
- */
-
-/**
- * ChangeLog:
- *
- * [06/14/2014]: by Markus Gschwendt <markus@runout.at>
- *               add option usernames for <todo>
- *               add start/due-date filter to todolist
- *               bugfix: when the checkbox is clicked the arguments of the <todo> tag will be lost
- *               some minor bugfixes
- * [06/11/2014]: by Markus Gschwendt <markus@runout.at>
- *               add option showdate to show/hide start/due-date
- * [05/15/2014]: by Markus Gschwendt <markus@runout.at>
- *               multiple users in <todo>, only the first user will be shown in rendered output
- *               ! there is still a bug when the checkbox is clicked the arguments of the <todo> tag will be lost
- * [05/14/2014]: by Markus Gschwendt <markus@runout.at>
- *               add start-due date: set a start and/or due date and get colored output (css)
- *               clean up some code, so we have less variables in function calls, use arrays instead
- * [05/11/2014]: by Markus Gschwendt <markus@runout.at>
- *               add options for list rendering: username:user|real|none checkbox:yes|no header:id|firstheader
- ** [04/13/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- **               bugfix: config option Strikethrough
- * [04/11/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- *               bugfix: encoding html code (security risk <todo><script>alert('hi')</script></todo>) - bug reported by Andreas
- *               bugfix: use correct <todo> tag if there are more than 1 in the same line.
- * [04/08/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- *               migrate changes made by Christian Marg to current version of plugin
- * [04/08/2013]: by Christian Marg <marg@rz.tu-clausthal.de>
- *               changed behaviour - when multiple todo-items have the same text, only the clicked one is checked.
- * [04/08/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- *               add description / comments and syntax howto about integration with searchpattern
- *               check compatibility with dokuwiki release 2012-10-13 "Adora Belle"
- *               remove getInfo() call because it's done by plugin.info.txt (since dokuwiki 2009-12-25 "Lemming")
- * [04/07/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- *               add handler method _searchpatternHandler() for dokuwiki searchpattern extension.
- *               add user assignment for todos (with @username syntax in todo tag e.g. <todo @leo>do something</todo>)
- * [04/05/2013]: by Leo Eibler <dokuwiki@sprossenwanne.at> / http://www.eibler.at
- *               upgrade plugin to work with newest version of dokuwiki (tested version Release 2013-03-06 Weatherwax RC1).
- * [08/16/2010]: Fixed another bug where javascript would not decode the action
- *               text properly (replaced unescape with decodeURIComponent).
- * [04/03/2010]: Fixed a bug where javascript would not decode the action text
- *               properly.
- * [03/31/2010]: Fixed a bug where checking or unchecking an action whose text
- *               appeared outside of the todo tags, would result in mangling the
- *               code on your page. Also added support for using the ampersand
- *               character (&) and html entities inside of your todo action.
- * [02/27/2010]: Created an action plugin to insert a ToDo button into the
- *               editor toolbar.
- * [10/14/2009]: Added the feature so that if you have Links turned off and you
- *               click on the text of an action, it will check that action off.
- *               Thanks to Tero for the suggestion! (Plugin Option: CheckboxText)
- * [10/08/2009]: I am no longer using the short open php tag (<?) for my
- *               ajax.php file. This was causing some problems for people who had
- *               short_open_tags=Off in their php.ini file (thanks Marcus!)
- * [10/01/2009]: Updated javascript to use .nextSibling instead of .nextElementSibling
- *               to make it compatible with older versions of Firefox and IE.
- * [09/13/2009]: Replaced ':' with a '-' in the action link so as not to create
- *               unnecessary namespaces (if the links option is active)
- * [09/10/2009]: Removed unnecessary function calls (urlencode) in _createLink() function
- * [09/09/2009]: Added ability for user to choose where Action links point to
- * [08/30/2009]: Initial Release
  */
 
 if(!defined('DOKU_INC')) die();
