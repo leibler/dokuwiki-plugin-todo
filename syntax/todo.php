@@ -240,7 +240,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $ID = $id;
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
-        $todouser = $data['todousers'][0];
         $checked = $data['checked'];
 
         if($data['checkbox']) {
@@ -252,22 +251,18 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             . ($checked ? ' checked="checked"' : '') . ' /> ';
         }
 
-        // Username of first todouser in list
-        if($todouser && $data['username'] != 'none') {
-            switch ($data['username']) {
-                case "user":
-                    break;
-                case "real":
-                    global $auth;
-                    $todouser = $auth->getUserData($todouser)['name'];
-                    break;
-                case "none": 
-                    unset($todouser); 
-                    break;
+        // Username(s) of todouser(s)
+        if (!isset($data['todousers'])) $data['todousers']=array();
+        $todousers = array();
+        foreach($data['todousers'] as $user) {
+            if (($user = $this->_prepUsername($user,$data['username'])) != '') {
+                $todousers[] = $user;
             }
-            if($todouser) {
-                $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
-            }
+        }
+        $todouser=join(', ',$todousers);
+
+        if($todouser!='') {
+            $return .= '<span class="todouser">[' . hsc($todouser) . ']</span>';
         }
 
         // start/due date
@@ -319,6 +314,31 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
     }
 
     /**
+     * Prepare user name string.
+     *
+     * @param string $username
+     * @param string $displaytype - one of 'user', 'real', 'none'
+     * @return string
+     */
+    private function _prepUsername($username, $displaytype) {
+
+        switch ($displaytype) {
+            case "real":
+                global $auth;
+                $username = $auth->getUserData($username)['name'];
+                break;
+            case "none": 
+                $username=""; 
+                break;
+            case "user":
+            default:
+                break;
+        }
+
+        return $username;
+    }
+
+     /**
      * Generate links from our Actions if necessary.
      *
      * @param Doku_Renderer_xhtml $renderer
