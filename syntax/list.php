@@ -171,7 +171,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         if($mode != 'xhtml') return false;
         /** @var Doku_Renderer_xhtml $renderer */
 
-        $opts['pattern'] = '/<todo([^>]*)>(.*)<\/todo[\W]*?>/'; //all todos in a wiki page
+        $opts['pattern'] = '/<todo([^>]*)>(.*?)<\/todo[\W]*?>/'; //all todos in a wiki page
         $opts['ns'] = $data['ns'];
         //TODO check if storing subpatterns doesn't cost too much resources
 
@@ -334,7 +334,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
             return $pages;
         }
-    return null;
+        return null;
     }
 
 
@@ -361,6 +361,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      * @param array $data array with rendering options
      */
     private function htmlTodoTable($R, $todopages, $data) {
+        if (is_null($todopages)) return;
         $R->table_open();
         foreach($todopages as $page) {
        	    if ($data['header']!='none') {
