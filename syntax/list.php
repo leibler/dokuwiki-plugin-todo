@@ -179,6 +179,18 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         search($todopages, $conf['datadir'], array($this, 'search_todos'), $opts); //browse wiki pages with callback to search_pattern
 
         $todopages = $this->filterpages($todopages, $data);
+        
+        foreach($todopages as &$page) {
+			uasort($page['todos'], function($a, $b) {
+				if(isset($a['due']) && isset($b['due'])) {
+					return $a['due'] <=> $b['due'];
+				} else if (isset($a['due']) xor isset($b['due'])) {
+					return isset($a['due']) ? -1 : 1; 
+				} else {
+					return 0;
+				}
+			});
+		}
 
         if($data['short']) {
             $this->htmlShort($renderer, $todopages, $data);
