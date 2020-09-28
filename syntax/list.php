@@ -359,7 +359,6 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     $done++;
                 }
             }
-            return $pages;
         }
 
         $R->cdata("($done/$todo)");
