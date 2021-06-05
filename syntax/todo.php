@@ -31,6 +31,12 @@
  * @author     Babbage <babbage@digitalbrink.com>; Leo Eibler <dokuwiki@sprossenwanne.at>
  */
 
+
+/* added by Un4givenOrc. Priority extension by adding optional ! (low), !! (medium) or !!! (high) into <todo> tag.
+ * renderer just adds class 'todolow', 'todomedium' or 'todohigh' to <span> tag depending on priority, so no need for wrap plugin, but no text is added.
+ * TODO: optionally make stylization appear only on to-do list page
+*/
+
 if(!defined('DOKU_INC')) die();
 
 /**
@@ -192,6 +198,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $data['priority'] = 0;
         $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
+		$data['priority'] = 0;
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
@@ -214,6 +221,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 				if (($plen == $excl_count) && ($plen >= 0) && ($plen <= 3))
 					$data['priority'] = $plen;
 			}
+			}
+			/* END */
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
@@ -270,6 +279,15 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 			else if ($priority == 3) $priorityclass .= ' todohigh';
 		}
 
+		// added by Un4givenOrc - priority extension
+		$priorityclass = "";
+		if (isset($data["priority"]))
+		{
+			$priority = $data["priority"];
+			if ($priority == 1) $priorityclass .= ' todolow';
+			else if ($priority == 2) $priorityclass .= ' todomedium';
+			else if ($priority == 3) $priorityclass .= ' todohigh';
+		}
         if($data['checkbox']) {
             $return .= '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
