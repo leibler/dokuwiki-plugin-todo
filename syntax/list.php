@@ -327,20 +327,23 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      *
      * @param $todopages array pages with all todoitems
      * @param $data      array listing parameters
-     * @return array filtered pages
+     * @return array of filtered pages
      */
     private function filterpages($todopages, $data) {
-        $pages = array();
-        if(count($todopages)>0) {
+        // skip function if $todopages has no values
+        if(isset($todopages) && count($todopages)>0) {
+            $pages = array();
             foreach($todopages as $page) {
                 $todos = array();
                 // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
                 foreach($page['matches'][1] as $todoindex => $todomatch) {
                     $todo = array_merge(array('todotitle' => trim($page['matches'][2][$todoindex]),  'todoindex' => $todoindex), $this->parseTodoArgs($todomatch), $data);
 
-                    if($this->isRequestedTodo($todo)) { $todos[] = $todo; }
+                    if($this->isRequestedTodo($todo)) {
+                        $todos[] = $todo;
+                    }
                 }
-                if(count($todos) > 0) {
+                if(isset($todos) && count($todos) > 0) {
                     $pages[] = array('id' => $page['id'], 'todos' => $todos);
                 }
             }
@@ -351,6 +354,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
 
     private function htmlShort($R, $todopages, $data) {
+        if (is_null($todopages)) return;
         $done = 0; $todo = 0;
         foreach($todopages as $page) {
             foreach($page['todos'] as $value) {
