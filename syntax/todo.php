@@ -101,9 +101,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 if($x) {
                     $handler->todoargs =  $this->parseTodoArgs($tododata[1]);
                 }
-                if(!is_numeric($handler->todo_index)) {
+                if(!isset($handler->todo_index) || !is_numeric($handler->todo_index)) {
                     $handler->todo_index = 0;
                 }
+                $handler->todo_user = '';
+                $handler->checked = '';
                 break;
             case DOKU_LEXER_MATCHED :
                 break;
