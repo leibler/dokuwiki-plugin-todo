@@ -186,6 +186,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
+            if(empty($option)) continue;
             if($option[0] == '@') {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
