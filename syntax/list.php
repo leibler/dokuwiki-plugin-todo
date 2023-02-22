@@ -331,8 +331,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
      */
     private function filterpages($todopages, $data) {
         // skip function if $todopages has no values
+        $pages = array();
         if(isset($todopages) && count($todopages)>0) {
-            $pages = array();
             foreach($todopages as $page) {
                 $todos = array();
                 // contains 3 arrays: an array with complete matches and 2 arrays with subpatterns
@@ -347,9 +347,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                     $pages[] = array('id' => $page['id'], 'todos' => $todos);
                 }
             }
-            return $pages;
         }
-        return null;
+        return $pages;
     }
 
 
