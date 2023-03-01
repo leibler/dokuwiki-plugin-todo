@@ -101,9 +101,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 if($x) {
                     $handler->todoargs =  $this->parseTodoArgs($tododata[1]);
                 }
-                if(!is_numeric($handler->todo_index)) {
+                if(!isset($handler->todo_index) || !is_numeric($handler->todo_index)) {
                     $handler->todo_index = 0;
                 }
+                $handler->todo_user = '';
+                $handler->checked = '';
                 break;
             case DOKU_LEXER_MATCHED :
                 break;
@@ -186,6 +188,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
+            if(empty($option)) continue;
             if($option[0] == '@') {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
