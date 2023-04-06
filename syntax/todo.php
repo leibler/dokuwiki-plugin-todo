@@ -281,7 +281,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
         // show start/due date
         if($data['showdate'] == 1 && (isset($data['start']) || isset($data['due']))) {
-            $return .= '<span class="tododates">[';
+            $return = '<span class="tododates">[';
             if(isset($data['start'])) { $return .= $data['start']->format('Y-m-d'); }
             $return .= ' → ';
             if(isset($data['due'])) { $return .= $data['due']->format('Y-m-d'); }
