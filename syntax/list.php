@@ -416,9 +416,8 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $requestedassignees = array_map( array($this,"__todolistExpandAssignees"), $data['assigned'] );
         }
         //assigned
-        $condition2 = $condition2
-                        || $data['assigned'] === 'all' //all
-                        || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
+        $condition2 = $data['assigned'] === 'all' //all
+                      || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
 
         if (!$condition2 && is_array($data['assigned']) && is_array($data['todousers']))
             foreach($data['todousers'] as $todouser) {

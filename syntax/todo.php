@@ -244,9 +244,10 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
         $checked = $data['checked'];
+        $return = '';
 
         if($data['checkbox']) {
-            $return = '<input type="checkbox" class="todocheckbox"'
+            $return .= '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
