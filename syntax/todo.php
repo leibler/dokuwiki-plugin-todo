@@ -152,7 +152,13 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     public function render($mode, Doku_Renderer $renderer, $data) {
         global $ID;
-        list($state, $todotitle) = $data;
+        
+        if(empty($data)) {
+            return false;
+        }
+
+        [$state] = $data;
+
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
             if($state == DOKU_LEXER_UNMATCHED) {
@@ -160,13 +166,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 #Output our result
                 $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
                 return true;
-            }
-
-        } elseif($mode == 'metadata') {
-            /** @var $renderer Doku_Renderer_metadata */
-            if($state == DOKU_LEXER_UNMATCHED) {
-                $id = $this->_composePageid($todotitle);
-                $renderer->internallink($id, $todotitle);
             }
         }
         return false;
@@ -336,8 +335,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 global $auth;
                 $username = $auth->getUserData($username)['name'];
                 break;
-            case "none": 
-                $username=""; 
+            case "none":
+                $username="";
                 break;
             case "user":
             default:
