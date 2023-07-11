@@ -386,7 +386,10 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
                 $R->tablerow_close();
        	    }
             foreach($page['todos'] as $todo) {
-//echo "<pre>";var_dump($todo);echo "</pre>";
+                if(empty($todo['todotitle']))
+                {
+                    $todo['todotitle'] = '<no title>';
+                }
                 $R->tablerow_open();
                 $R->tablecell_open();
                 $R->doc .= $this->createTodoItem($R, $page['id'], array_merge($todo, $data));
