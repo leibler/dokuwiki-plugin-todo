@@ -106,6 +106,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 }
                 $handler->todo_user = '';
                 $handler->checked = '';
+                $handler->todotitle = '';
                 break;
             case DOKU_LEXER_MATCHED :
                 break;
@@ -119,22 +120,17 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                  * -</a> or </span>
                  * </span>
                  */
-
-                #Make sure there is actually an action to create
-                if(trim($match) != '') {
-
-                    $data = array_merge(array ($state, 'todotitle' => $match, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
-                    $handler->todo_index++;
-                    return $data;
-                }
-
+                $handler->todotitle = $match;
                 break;
             case DOKU_LEXER_EXIT :
+                $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
+                $handler->todo_index++;
                 #Delete temporary checked variable
                 unset($handler->todo_user);
                 unset($handler->checked);
                 unset($handler->todoargs);
-                //unset($handler->todo_index);
+                unset($handler->todotitle);
+                return $data;
                 break;
             case DOKU_LEXER_SPECIAL :
                 break;
@@ -152,7 +148,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     public function render($mode, Doku_Renderer $renderer, $data) {
         global $ID;
-        
+
         if(empty($data)) {
             return false;
         }
@@ -161,8 +157,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
-            if($state == DOKU_LEXER_UNMATCHED) {
-
+            if($state == DOKU_LEXER_EXIT) {
                 #Output our result
                 $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
                 return true;
