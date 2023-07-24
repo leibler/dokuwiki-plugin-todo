@@ -422,7 +422,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         $condition2 = $data['assigned'] === 'all' //all
                       || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
 
-        if (!$condition2 && is_array($data['assigned']) && is_array($data['todousers']))
+        if (!$condition2 && is_array($data['assigned']) &&  array_key_exists('todousers', $data) && is_array($data['todousers']))
             foreach($data['todousers'] as $todouser) {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
