@@ -415,20 +415,20 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         // resolve placeholder in assignees
         $requestedassignees = array();
-        if(is_array($data['assigned'])) {
+        if(isset($data['assigned']) && is_array($data['assigned'])) {
             $requestedassignees = array_map( array($this,"__todolistExpandAssignees"), $data['assigned'] );
         }
         //assigned
         $condition2 = $data['assigned'] === 'all' //all
                       || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
 
-        if (!$condition2 && is_array($data['assigned']) &&  array_key_exists('todousers', $data) && is_array($data['todousers']))
+        if (!$condition2 && isset($data['assigned']) && is_array($data['assigned']) && isset($data['todousers']) && is_array($data['todousers']))
             foreach($data['todousers'] as $todouser) {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
 
         //completed by
-        if($condition2 && is_array($data['completeduserlist']))
+        if($condition2 && isset($data['completeduserlist']) && is_array($data['completeduserlist']))
             $condition2 = in_array($data['completeduser'], $data['completeduserlist']);
 
         //compare start/due dates
