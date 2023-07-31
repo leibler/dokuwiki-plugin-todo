@@ -435,7 +435,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
             if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
-                if(is_object($data['start'])) {
+                if(isset($data['start'])) {
                     if($data['startignore'] != '!') {
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
@@ -448,7 +448,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
 
             if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
-                if(is_object($data['due'])) {
+                if(isset($data['due'])) {
                     if($data['dueignore'] != '!') {
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
