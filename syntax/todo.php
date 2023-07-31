@@ -202,6 +202,9 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                         if(in_array($value, array('user', 'real', 'none'))) {
                             $data['username'] = $value;
                         }
+                        else {
+                            $data['username'] = 'none';
+                        }
                         break;
                     case 'start':
                         if(date('Y-m-d', strtotime($value)) == $value) {
