@@ -157,7 +157,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 		
 		if(empty($data)) {
             return false;
-        }
+	}
 
         [$state] = $data;
 
@@ -265,6 +265,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $checked = $data['checked'];
 		$return = '';
 		$priorityclass = ''; 
+	
 		if (isset($data['priority']))
 		{
 			$priority = $data['priority'];
@@ -325,7 +326,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= ']</span>';
         }
 
-        $spanclass = 'todotext' . $priorityclass;	
+	$spanclass = 'todotext' . $priorityclass;
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $oldID == $ID && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
