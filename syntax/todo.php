@@ -184,7 +184,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 		unset($data['priority']);
         $data['priority'] = 0;
 		
-	$data['showdate'] = $this->getConf("ShowdateTag");
+		$data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
 		
         $options = explode(' ', $todoargs);
