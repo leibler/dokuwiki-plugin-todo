@@ -101,7 +101,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 if($x) {
                     $handler->todoargs =  $this->parseTodoArgs($tododata[1]);
                 }
-                if(!is_numeric($handler->todo_index)) {
+                if(!isset($handler->todo_index) || !is_numeric($handler->todo_index)) {
                     $handler->todo_index = 0;
                 }
                 break;
@@ -117,22 +117,21 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                  * -</a> or </span>
                  * </span>
                  */
-
-                #Make sure there is actually an action to create
-                if(trim($match) != '') {
-
-                    $data = array_merge(array ($state, 'todotitle' => $match, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
-                    $handler->todo_index++;
-                    return $data;
-                }
+                $handler->todotitle = $match;
 
                 break;
             case DOKU_LEXER_EXIT :
-                #Delete temporary checked variable
-                unset($handler->todo_user);
-                unset($handler->checked);
-                unset($handler->todoargs);
+				if (isset($handler) && !is_null($handler))
+				{
+					$data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
+					$handler->todo_index++;
+					#Delete temporary checked variable
+					unset($handler->todo_user);
+					unset($handler->checked);
+					unset($handler->todoargs);
+				}
                 //unset($handler->todo_index);
+				return $data;
                 break;
             case DOKU_LEXER_SPECIAL :
                 break;
@@ -251,7 +250,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
         $checked = $data['checked'];
-
+		$return = '';
 		$priorityclass = ""; 
 		if (isset($data["priority"]))
 		{
