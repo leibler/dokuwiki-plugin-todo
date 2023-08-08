@@ -121,16 +121,20 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                  * </span>
                  */
                 $handler->todotitle = $match;
+
                 break;
             case DOKU_LEXER_EXIT :
-                $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
-                $handler->todo_index++;
-                #Delete temporary checked variable
-                unset($handler->todo_user);
-                unset($handler->checked);
-                unset($handler->todoargs);
-                unset($handler->todotitle);
-                return $data;
+		if (isset($handler) && !is_null($handler))
+		{
+					$data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
+					$handler->todo_index++;
+					#Delete temporary checked variable
+					unset($handler->todo_user);
+					unset($handler->checked);
+					unset($handler->todoargs);
+					unset($handler->todotitle);
+					return $data;
+		}
                 break;
             case DOKU_LEXER_SPECIAL :
                 break;
@@ -150,9 +154,9 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         global $ID;
 
         if(empty($data)) {
-            return false;
-        }
-
+	        return false;
+	}
+	
         [$state] = $data;
 
         if($mode == 'xhtml') {
@@ -162,7 +166,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
                 return true;
             }
-        }
+		}
         return false;
     }
 
@@ -177,14 +181,16 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
-		unset($data['priority']);
+	unset($data['priority']);
         $data['priority'] = 0;
-        $data['showdate'] = $this->getConf("ShowdateTag");
+		
+	$data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
+		
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
-            if(empty($option)) continue;
+			if(empty($option)) continue;
             if($option[0] == '@') {
                 $data['todousers'][] = substr($option, 1); //fill todousers array
                 if(!isset($data['todouser'])) $data['todouser'] = substr($option, 1); //set the first/main todouser
@@ -197,12 +203,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                     $data['completeddate'] = new DateTime($completeddate);
                 }
             }
-			elseif($option[0] == '!') {
-				$plen = strlen($option);
-				$excl_count = substr_count($option, "!");
-				if (($plen == $excl_count) && ($plen >= 0) && ($plen <= 3))
-					$data['priority'] = $plen;
-			}
+            elseif($option[0] == '!') {
+		$plen = strlen($option);
+		$excl_count = substr_count($option, "!");
+		if (($plen == $excl_count) && ($plen >= 0) && ($plen <= 3))
+			$data['priority'] = $plen;
+	    }
             else {
                 @list($key, $value) = explode(':', $option, 2);
                 switch($key) {
@@ -246,18 +252,19 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
         $checked = $data['checked'];
-        $return = '';
-		$priorityclass = ''; 
-		if (isset($data['priority']))
-		{
-			$priority = $data['priority'];
-			if ($priority == 1) $priorityclass .= ' todolow';
-			else if ($priority == 2) $priorityclass .= ' todomedium';
-			else if ($priority == 3) $priorityclass .= ' todohigh';
-		}
+	$return = '';
+	$priorityclass = ''; 
+	
+	if (isset($data['priority']))
+	{
+		$priority = $data['priority'];
+		if ($priority == 1) $priorityclass .= ' todolow';
+		else if ($priority == 2) $priorityclass .= ' todomedium';
+		else if ($priority == 3) $priorityclass .= ' todohigh';
+	}
 
         if($data['checkbox']) {
-            $return .= '<input type="checkbox" class="todocheckbox"'
+	    $return .= '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
@@ -299,7 +306,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= ']</span>';
         }
 
-        $spanclass = 'todotext' . $priorityclass;
+	$spanclass = 'todotext' . $priorityclass;
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $oldID == $ID && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
