@@ -177,7 +177,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
-        unset($data['priority']);
         $data['priority'] = 0;
         $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
@@ -201,12 +200,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             elseif($option[0] == '!') {
                 $plen = strlen($option);
                 $excl_count = substr_count($option, "!");
-                if ($plen == $excl_count)
-                {
-                    if (($plen >= 0) && ($plen <= 3))
-                        $data['priority'] = $plen;
-                    else if ($plen > 3)
-                        $data['priority'] = 3;
+                if (($plen == $excl_count) && ($excl_count >= 0)) {
+                    $data['priority'] = $excl_count;
                 }
             }
             else {
@@ -260,11 +255,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $priority = $data['priority'];
             if ($priority == 1) $priorityclass .= ' todolow';
             else if ($priority == 2) $priorityclass .= ' todomedium';
-            else if ($priority == 3) $priorityclass .= ' todohigh';
+            else if ($priority >= 3) $priorityclass .= ' todohigh';
         }
 
         if($data['checkbox']) {
-        $return .= '<input type="checkbox" class="todocheckbox"'
+            $return .= '<input type="checkbox" class="todocheckbox"'
             . ' data-index="' . $todoindex . '"'
             . ' data-date="' . hsc(@filemtime(wikiFN($ID))) . '"'
             . ' data-pageid="' . hsc($ID) . '"'
@@ -311,7 +306,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $spanclass .= ' clickabletodo todohlght';
         }
         if(isset($bg)) $spanclass .= ' '.$bg;
-        $return .= '<span class="' . $spanclass . '">';
+            $return .= '<span class="' . $spanclass . '">';
 
         if($checked && $this->getConf("Strikethrough")) {
             $return .= '<del>';
