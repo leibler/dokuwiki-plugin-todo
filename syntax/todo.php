@@ -124,16 +124,14 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 $handler->todotitle = $match;
                 break;
             case DOKU_LEXER_EXIT :
-                if (isset($handler) && !is_null($handler))
-                {
-                    $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
-                    $handler->todo_index++;
-                    #Delete temporary checked variable
-                    unset($handler->todo_user);
-                    unset($handler->checked);
-                    unset($handler->todoargs);
-					unset($handler->todotitle);
-					return $data;
+                 $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
+                $handler->todo_index++;
+                #Delete temporary checked variable
+                unset($handler->todo_user);
+                unset($handler->checked);
+                unset($handler->todoargs);
+                    unset($handler->todotitle);
+                    return $data;
                 }
                 return $data;
 				return $data;
