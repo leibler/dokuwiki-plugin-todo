@@ -265,8 +265,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $return = '';
         $priorityclass = ''; 
 		
-        if (isset($data['priority']))
-        {
+        if (isset($data['priority'])) {
             $priority = $data['priority'];
             if ($priority == 1) $priorityclass .= ' todolow';
             else if ($priority == 2) $priorityclass .= ' todomedium';
