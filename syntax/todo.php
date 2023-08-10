@@ -124,7 +124,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 $handler->todotitle = $match;
                 break;
             case DOKU_LEXER_EXIT :
-                 $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
+                $data = array_merge(array ($state, 'todotitle' => $handler->todotitle, 'todoindex' => $handler->todo_index, 'todouser' => $handler->todo_user, 'checked' => $handler->checked), $handler->todoargs);
                 $handler->todo_index++;
                 #Delete temporary checked variable
                 unset($handler->todo_user);
@@ -190,7 +190,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 		
         unset($data['priority']);
         $data['priority'] = 0;
-        
         $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
         
