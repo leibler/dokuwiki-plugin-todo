@@ -215,8 +215,13 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 			elseif($option[0] == '!') {
                 $plen = strlen($option);
                 $excl_count = substr_count($option, "!");
-                if (($plen == $excl_count) && ($plen >= 0) && ($plen <= 3))
-                    $data['priority'] = $plen;
+                if ($plen == $excl_count)
+                {
+                    if (($plen >= 0) && ($plen <= 3))
+                        $data['priority'] = $plen;
+                    else if ($plen > 3)
+                        $data['priority'] = 3;
+                }
             }
 			}
             else {
