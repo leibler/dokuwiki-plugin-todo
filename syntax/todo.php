@@ -156,7 +156,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         if(empty($data)) {
             return false;
         }
-    
+
         [$state] = $data;
 
         if($mode == 'xhtml') {
