@@ -44,7 +44,6 @@ var ToDoPlugin = {
         //set lock
         ToDoPlugin.locked = true;
 
-
         var $spanTodoinnertext = $chk.nextAll("span.todotext:first").find("span.todoinnertext"),
             param = $chk.data(), // contains: index, pageid, date, strikethrough
             checked = !$chk.is(':checked');
@@ -53,7 +52,6 @@ var ToDoPlugin = {
         if (param.index === undefined) param.index = -1;
 
         if ($spanTodoinnertext.length) {
-
             /**
              * Callback function update the todoitem when save request succeed
              *
@@ -90,6 +88,7 @@ var ToDoPlugin = {
                 DOKU_BASE + 'lib/exe/ajax.php',
                 {
                     call: 'plugin_todo',
+                    mode: 'checkbox',
                     index: param.index,
                     pageid: param.pageid,
                     checked: checked ? "1" : "0",
@@ -101,16 +100,46 @@ var ToDoPlugin = {
         } else {
             alert("Appropriate javascript element not found.\nReverting checkmark.");
         }
+    },
 
+    uncheckall: function () {
+        if (ToDoPlugin.locked) {
+            return;
+        }
+        ToDoPlugin.locked = true;
+        
+        var whenCompleted = function () {
+            jQuery('input.todocheckbox').each(function() {
+                jQuery(this).prop('checked', false);
+            });
+
+            jQuery('span.todoinnertext').each(function () {
+                if (jQuery(this).parent().is("del")) {
+                    jQuery(this).unwrap();
+                }
+            });
+
+            jQuery('span.todouser').each(function () {
+                jQuery(this).remove();
+            });
+            
+            ToDoPlugin.locked = false;
+        };
+        
+        jQuery.post(
+            DOKU_BASE + 'lib/exe/ajax.php',
+            {
+                call: 'plugin_todo',
+                mode: 'uncheckall',
+                pageid: jQuery('input.todocheckbox:first').data().pageid
+            },
+        whenCompleted, 'json');
     }
-
-
 };
 
-jQuery(function(){
-
+jQuery(function () {
     // add handler to checkbox
-    jQuery('input.todocheckbox').click(function(e){
+    jQuery('input.todocheckbox').click(function (e) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -122,11 +151,15 @@ jQuery(function(){
     });
 
     // add click handler to todotext spans when marked with 'clickabletodo'
-    jQuery('span.todotext.clickabletodo').click(function(){
+    jQuery('span.todotext.clickabletodo').click(function () {
         //Find the checkbox node we need
         var $chk = jQuery(this).prevAll('input.todocheckbox:first');
 
         ToDoPlugin.todo($chk);
     });
 
+    // add click handler to button to uncheck all todos on its page
+    jQuery('button.todouncheckall').click(function () {
+        ToDoPlugin.uncheckall();
+    });
 });

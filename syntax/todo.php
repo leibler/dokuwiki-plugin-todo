@@ -39,6 +39,8 @@ if(!defined('DOKU_INC')) die();
  */
 class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
 
+    const TODO_UNCHECK_ALL = '~~TODO:UNCHECKALL~~';
+
     /**
      * Get the type of syntax this plugin defines.
      *
@@ -77,6 +79,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     public function connectTo($mode) {
         $this->Lexer->addEntryPattern('<todo[\s]*?.*?>(?=.*?</todo>)', $mode, 'plugin_todo_todo');
+        $this->Lexer->addSpecialPattern(self::TODO_UNCHECK_ALL, $mode, 'plugin_todo_todo');
         $this->Lexer->addSpecialPattern('~~NOTODO~~', $mode, 'plugin_todo_todo');
     }
 
@@ -131,8 +134,10 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 unset($handler->todoargs);
                 unset($handler->todotitle);
                 return $data;
-                break;
             case DOKU_LEXER_SPECIAL :
+                if($match == self::TODO_UNCHECK_ALL) {
+                    return array($state, $match);
+                }
                 break;
         }
         return array();
@@ -153,14 +158,20 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             return false;
         }
 
-        [$state] = $data;
+        [$state, $match] = $data;
 
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
-            if($state == DOKU_LEXER_EXIT) {
-                #Output our result
-                $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
-                return true;
+            switch($state) {
+               case DOKU_LEXER_EXIT :
+                    #Output our result
+                    $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
+                    return true;
+                case DOKU_LEXER_SPECIAL :
+                    if($match == self::TODO_UNCHECK_ALL) {
+                        $renderer->doc .= '<button type="button" class="todouncheckall">Uncheck all todos</button>';
+                    }
+                    return true;
             }
         }
         return false;
