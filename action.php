@@ -87,7 +87,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
             // path = page ID
             $ID = cleanID(urldecode($_REQUEST['pageid']));
         } else {
-            return;    
+            return;
         }
 
         if($mode == 'checkbox') {
@@ -135,15 +135,13 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
         switch($mode) {
             case 'checkbox':
-                switch($mode) {
-            case 'checkbox':
                 #Determine position of tag
-                        if($index >= 0) {
-                            $index++;
-                            // index is only set on the current page with the todos
-                            // the occurances are counted, untill the index-th input is reached which is updated
-                            $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
-                            $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
+                if($index >= 0) {
+                    $index++;
+                    // index is only set on the current page with the todos
+                    // the occurances are counted, untill the index-th input is reached which is updated
+                    $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
+                    $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
 
                             if($todoTagEndPos > $todoTagStartPos) {
                                 // @date 20140714 le add todo text to minorchange
