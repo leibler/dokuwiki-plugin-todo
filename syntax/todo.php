@@ -249,7 +249,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todotitle = $data['todotitle'];
         $todoindex = $data['todoindex'];
         $checked = $data['checked'];
-        $return = '';
+        $return = '<span class="todo">';
 
         if($data['checkbox']) {
             $return .= '<input type="checkbox" class="todocheckbox"'
@@ -320,7 +320,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= '</del>';
         }
 
-        $return .= '</span>';
+        $return .= '</span></span>';
 
         //restore page ID
         $ID = $oldID;
