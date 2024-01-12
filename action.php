@@ -82,16 +82,23 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
 
         #Variables
         // by einhirn <marg@rz.tu-clausthal.de> determine checkbox index by using class 'todocheckbox'
-
-        if(isset($_REQUEST['index'], $_REQUEST['checked'], $_REQUEST['pageid'])) {
-            // index = position of occurrence of <input> element (starting with 0 for first element)
-            $index = (int) $_REQUEST['index'];
-            // checked = flag if input is checked means to do is complete (1) or not (0)
-            $checked = (boolean) urldecode($_REQUEST['checked']);
+        if(isset($_REQUEST['mode'], $_REQUEST['pageid'])) {
+            $mode = $_REQUEST['mode'];
             // path = page ID
             $ID = cleanID(urldecode($_REQUEST['pageid']));
         } else {
             return;
+        }
+
+        if($mode == 'checkbox') {
+            if(isset($_REQUEST['index'], $_REQUEST['checked'], $_REQUEST['pageid'])) {
+                // index = position of occurrence of <input> element (starting with 0 for first element)
+                $index = (int) $_REQUEST['index'];
+                // checked = flag if input is checked means to do is complete (1) or not (0)
+                $checked = (boolean) urldecode($_REQUEST['checked']);
+            } else {
+                return;
+            }
         }
 
         $date = 0;
@@ -126,27 +133,44 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         #Retrieve Page Contents
         $wikitext = rawWiki($ID);
 
-        #Determine position of tag
-        if($index >= 0) {
-            $index++;
-            // index is only set on the current page with the todos
-            // the occurances are counted, untill the index-th input is reached which is updated
-            $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
-            $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
+        switch($mode) {
+            case 'checkbox':
+                #Determine position of tag
+                if($index >= 0) {
+                    $index++;
+                    // index is only set on the current page with the todos
+                    // the occurances are counted, untill the index-th input is reached which is updated
+                    $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
+                    $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
 
-            if($todoTagEndPos > $todoTagStartPos) {
-                // @date 20140714 le add todo text to minorchange
-                $todoTextEndPos = strpos( $wikitext, '</todo', $todoTagEndPos );
-                $todoText = substr( $wikitext, $todoTagEndPos, $todoTextEndPos-$todoTagEndPos );
-                // update text
-                $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
-                $newTag = $this->_buildTodoTag($oldTag, $checked);
-                $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
+                            if($todoTagEndPos > $todoTagStartPos) {
+                                // @date 20140714 le add todo text to minorchange
+                                $todoTextEndPos = strpos( $wikitext, '</todo', $todoTagEndPos );
+                                $todoText = substr( $wikitext, $todoTagEndPos, $todoTextEndPos-$todoTagEndPos );
+                                // update text
+                                $oldTag = substr($wikitext, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
+                                $newTag = $this->_buildTodoTag($oldTag, $checked);
+                                $wikitext = substr_replace($wikitext, $newTag, $todoTagStartPos, ($todoTagEndPos - $todoTagStartPos));
 
-                // save Update (Minor)
+                                // save Update (Minor)
+                                lock($ID);
+                                // @date 20140714 le add todo text to minorchange, use different message for checked or unchecked
+                                saveWikiText($ID, $wikitext, $this->getLang($checked?'checkboxchange_on':'checkboxchange_off').': '.$todoText, $minoredit = true);
+                                unlock($ID);
+
+                        $return = array(
+                            'date' => @filemtime(wikiFN($ID)),
+                            'succeed' => true
+                        );
+                        $this->printJson($return);
+                    }
+                }
+                break;
+            case 'uncheckall':
+                $newWikitext = preg_replace('/(<todo.*?)(\s+#[^>\s]*)(.*?>|\s.*?<\/todo>)/', '$1$3', $wikitext);
+
                 lock($ID);
-                // @date 20140714 le add todo text to minorchange, use different message for checked or unchecked
-                saveWikiText($ID, $wikitext, $this->getLang($checked?'checkboxchange_on':'checkboxchange_off').': '.$todoText, $minoredit = true);
+                saveWikiText($ID, $newWikitext, 'Unchecked all ToDos', $minoredit = true);
                 unlock($ID);
 
                 $return = array(
@@ -154,7 +178,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
                     'succeed' => true
                 );
                 $this->printJson($return);
-            }
+                break;
         }
     }
 
@@ -184,7 +208,6 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
         }
         return $newTag;
     }
-
 
     /**
      * Find position of $occurance-th $needle in haystack
