@@ -415,27 +415,27 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         // resolve placeholder in assignees
         $requestedassignees = array();
-        if(is_array($data['assigned'])) {
+        if(isset($data['assigned']) && is_array($data['assigned'])) {
             $requestedassignees = array_map( array($this,"__todolistExpandAssignees"), $data['assigned'] );
         }
         //assigned
         $condition2 = $data['assigned'] === 'all' //all
                       || (is_bool($data['assigned']) && $data['assigned'] == $data['todouser']); //yes or no
 
-        if (!$condition2 && is_array($data['assigned']) && is_array($data['todousers']))
+        if (!$condition2 && isset($data['assigned']) && is_array($data['assigned']) && isset($data['todousers']) && is_array($data['todousers']))
             foreach($data['todousers'] as $todouser) {
                 if(in_array($todouser, $requestedassignees)) { $condition2 = true; break; }
             }
 
         //completed by
-        if($condition2 && is_array($data['completeduserlist']))
+        if($condition2 && isset($data['completeduserlist']) && is_array($data['completeduserlist']))
             $condition2 = in_array($data['completeduser'], $data['completeduserlist']);
 
         //compare start/due dates
         if($condition1 && $condition2) {
             $condition3s = true; $condition3d = true;
             if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
-                if(is_object($data['start'])) {
+                if(isset($data['start'])) {
                     if($data['startignore'] != '!') {
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
@@ -448,7 +448,7 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             }
 
             if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
-                if(is_object($data['due'])) {
+                if(isset($data['due'])) {
                     if($data['dueignore'] != '!') {
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
