@@ -143,7 +143,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
                     $todoTagStartPos = $this->_strnpos($wikitext, '<todo', $index);
                     $todoTagEndPos = strpos($wikitext, '>', $todoTagStartPos) + 1;
 
-                            if($todoTagEndPos > $todoTagStartPos) {
+                            if($todoTagStartPos!==false && $todoTagEndPos > $todoTagStartPos) { 
                                 // @date 20140714 le add todo text to minorchange
                                 $todoTextEndPos = strpos( $wikitext, '</todo', $todoTagEndPos );
                                 $todoText = substr( $wikitext, $todoTagEndPos, $todoTextEndPos-$todoTagEndPos );
@@ -163,6 +163,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
                             'succeed' => true
                         );
                         $this->printJson($return);
+			
                     }
                 }
                 break;
@@ -214,7 +215,11 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      */
     private function _strnpos($haystack, $needle, $occurance, $pos = 0) {
         for($i = 1; $i <= $occurance; $i++) {
-            $pos = strpos($haystack, $needle, $pos) + 1;
+            $pos = strpos($haystack, $needle, $pos);
+
+            if ($pos===false) {return false; }
+
+            $pos++;
         }
         return $pos - 1;
     }
