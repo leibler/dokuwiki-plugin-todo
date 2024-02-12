@@ -136,7 +136,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 return $data;
             case DOKU_LEXER_SPECIAL :
                 if($match == self::TODO_UNCHECK_ALL) {
-                    return array($state, $match);
+                    return array_merge(array($state, 'match' => $match));
                 }
                 break;
         }
@@ -158,7 +158,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             return false;
         }
 
-        [$state, $match] = $data;
+        $state = $data[0];
 
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
@@ -168,7 +168,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                     $renderer->doc .= $this->createTodoItem($renderer, $ID, array_merge($data, array('checkbox'=>'yes')));
                     return true;
                 case DOKU_LEXER_SPECIAL :
-                    if($match == self::TODO_UNCHECK_ALL) {
+                    if(isset($data['match']) && $data['match'] == self::TODO_UNCHECK_ALL) {
                         $renderer->doc .= '<button type="button" class="todouncheckall">Uncheck all todos</button>';
                     }
                     return true;
