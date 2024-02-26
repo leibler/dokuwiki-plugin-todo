@@ -188,7 +188,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
-        $data['priority'] = 0;
         $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
         $data['priority'] = 0;
@@ -262,14 +261,6 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         $todoindex = $data['todoindex'];
         $checked = $data['checked'];
         $return = '<span class="todo">';
-        $priorityclass = ''; 
-        
-        if (isset($data['priority'])) {
-            $priority = $data['priority'];
-            if ($priority == 1) $priorityclass .= ' todolow';
-            else if ($priority == 2) $priorityclass .= ' todomedium';
-            else if ($priority >= 3) $priorityclass .= ' todohigh';
-        }
 
         if($data['checkbox']) {
             $return .= '<input type="checkbox" class="todocheckbox"'
