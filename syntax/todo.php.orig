@@ -130,11 +130,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 unset($handler->todo_user);
                 unset($handler->checked);
                 unset($handler->todoargs);
-                    unset($handler->todotitle);
-                    return $data;
-                }
+                unset($handler->todotitle);
                 return $data;
-				return $data;
             case DOKU_LEXER_SPECIAL :
                 if($match == self::TODO_UNCHECK_ALL) {
                     return array_merge(array($state, 'match' => $match));
@@ -154,12 +151,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      */
     public function render($mode, Doku_Renderer $renderer, $data) {
         global $ID;
-		
-		if(empty($data)) {
-            return false;
-		}
 
-        [$state] = $data;
+        if(empty($data)) {
+            return false;
+        }
+
+        $state = $data[0];
 
         if($mode == 'xhtml') {
             /** @var $renderer Doku_Renderer_xhtml */
@@ -172,6 +169,8 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                     if(isset($data['match']) && $data['match'] == self::TODO_UNCHECK_ALL) {
                         $renderer->doc .= '<button type="button" class="todouncheckall">Uncheck all todos</button>';
                     }
+                    return true;
+            }
         }
         return false;
     }
@@ -187,6 +186,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['start']);
         unset($data['due']);
         unset($data['completeddate']);
+		unset($data['priority']);
 		
         $data['priority'] = 0;
         $data['showdate'] = $this->getConf("ShowdateTag");
@@ -330,13 +330,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
             $return .= ']</span>';
         }
 
-		$spanclass = 'todotext' . $priorityclass;
+        $spanclass = 'todotext' . $priorityclass;
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $oldID == $ID && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
-        if(isset($bg)) {
-            $spanclass .= ' '.$bg;
-        }
+        if(isset($bg)) $spanclass .= ' '.$bg;
         $return .= '<span class="' . $spanclass . '">';
 
         if($checked && $this->getConf("Strikethrough")) {
