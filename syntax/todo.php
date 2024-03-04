@@ -94,7 +94,11 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param $state    int     The lexer state for the match.
      * @param $pos      int     The character position of the matched text.
      * @param $handler Doku_Handler  Reference to the Doku_Handler object.
-     * @return int The current lexer state for the match.
+     * @return array  An empty array for most cases, except:
+                        - DOKU_LEXER_EXIT:  An array containing the current lexer state
+                                            and information about the just lexed todo. 
+                        - DOKU_LEXER_SPECIAL:   For the special pattern of the Uncheck-All-Button, an
+                                                array containing the current lexer state and the matched text.
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
         switch($state) {
