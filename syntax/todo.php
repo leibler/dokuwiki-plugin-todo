@@ -194,6 +194,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         unset($data['completeddate']);
         $data['showdate'] = $this->getConf("ShowdateTag");
         $data['username'] = $this->getConf("Username");
+        $data['priority'] = 0;
         $options = explode(' ', $todoargs);
         foreach($options as $option) {
             $option = trim($option);
@@ -208,6 +209,13 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 $data['completeduser'] = substr($completeduser, 1);
                 if(date('Y-m-d', strtotime($completeddate)) == $completeddate) {
                     $data['completeddate'] = new DateTime($completeddate);
+                }
+            }
+            elseif($option[0] == '!') {
+                $plen = strlen($option);
+                $excl_count = substr_count($option, "!");
+                if (($plen == $excl_count) && ($excl_count >= 0)) {
+                    $data['priority'] = $excl_count;
                 }
             }
             else {
@@ -302,10 +310,22 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
 
         $spanclass = 'todotext';
+        // priority
+        $priorityclass = ''; 
+        if (isset($data['priority'])) {
+            $priority = $data['priority'];
+            if ($priority == 1) $priorityclass = ' todolow';
+            else if ($priority == 2) $priorityclass = ' todomedium';
+            else if ($priority >= 3) $priorityclass = ' todohigh';
+        }
+
+        $spanclass = 'todotext' . $priorityclass;
         if($this->getConf("CheckboxText") && !$this->getConf("AllowLinks") && $oldID == $ID && $data['checkbox']) {
             $spanclass .= ' clickabletodo todohlght';
         }
-        if(isset($bg)) $spanclass .= ' '.$bg;
+        if(isset($bg)) {
+            $spanclass .= ' '.$bg;
+        }
         $return .= '<span class="' . $spanclass . '">';
 
         if($checked && $this->getConf("Strikethrough")) {
