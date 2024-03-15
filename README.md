@@ -19,3 +19,9 @@ git push origin `date +%F`
 git push -f origin latest
 ```
 - Create a new release based on `latest` tag.
+
+To update local tags to match remote tags (i.e. reflect a move of the 'latest' tag) you need to
+```
+git fetch --tags -f
+```
+because the updated tag is refused otherwise.
