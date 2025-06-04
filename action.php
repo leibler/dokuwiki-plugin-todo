@@ -189,8 +189,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
      * @param mixed $return
      */
     private function printJson($return) {
-        $json = new JSON();
-        echo $json->encode($return);
+        echo json_encode($return);
     }
 
     /**
