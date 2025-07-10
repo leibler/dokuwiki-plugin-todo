@@ -436,27 +436,25 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $condition3s = true; $condition3d = true;
             if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
                 if(isset($data['start'])) {
-                    if($data['startignore'] != '!') {
+                    if($data['startignore'] != '*') { //date comparison is needed unless we don't care -> '*'
                         if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
                         if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
                         if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $data['start']; }
                     }
-                } else {
-                    if(!$data['startignore'] == '*') { $condition3s = false; }
-                    if($data['startignore'] == '!') { $condition3s = false; }
+                } elseif($data['startignore'] != '!') { //start date not set and we're not looking for todos without start date.
+                    $condition3s = false;
                 }
             }
 
             if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
                 if(isset($data['due'])) {
-                    if($data['dueignore'] != '!') {
+                    if($data['dueignore'] != '*') { //date comparison is needed unless we don't care -> '*'
                         if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
                         if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
                         if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $data['due']; }
                     }
-                 } else {
-                    if(!$data['dueignore'] == '*') { $condition3d = false; }
-                    if($data['dueignore'] == '!') { $condition3d = false; }
+                } elseif($data['dueignore'] != '!') { //due date not set and we're not looking for todos without due date.
+                    $condition3d = false; 
                 }
             }
             $condition3 = $condition3s && $condition3d;
@@ -492,9 +490,9 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             } elseif ($date =='*') {
                $result = array('', '*');
             } else {
-                if(substr($date, -1) == '*') {
+                if(substr($date, -1) == '!') {
                     $date = substr($date, 0, -1);
-                    $result = array($date, '*');
+                    $result = array($date, '!');
                 }
 
                 if(date('Y-m-d', strtotime($date)) == $date) {

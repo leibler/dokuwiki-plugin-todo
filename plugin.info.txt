@@ -1,7 +1,7 @@
 base   todo
 author Leo Eibler, Christian Marg, Markus Gschwendt, Robert Weinmeister
 email  dokuwiki@sprossenwanne.at, marg@rz.tu-clausthal.de, develop@weinmeister.org
-date   2025-07-09
+date   2025-07-10
 name   ToDo
 desc   Create a checkbox based todo list with optional user assignment (basic syntax: <todo>This is a ToDo</todo>). It can also be used as a lightweight task list management system.
 url    https://www.dokuwiki.org/plugin:todo
