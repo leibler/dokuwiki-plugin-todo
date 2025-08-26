@@ -13,5 +13,6 @@ $lang['qb_todobutton'] = 'Mark text as ToDo';
 $lang['refreshpage'] = 'A newer version of this page is available, refresh your page before trying again.';
 $lang['checkboxchange_on'] = 'ToDo checked';
 $lang['checkboxchange_off'] = 'ToDo unchecked';
+$lang['uncheckall_todos'] = 'Uncheck all ToDos';
 
 //Setup VIM: ex: et ts=2 enc=utf-8 :

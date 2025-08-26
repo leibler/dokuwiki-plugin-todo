@@ -155,7 +155,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                     return true;
                 case DOKU_LEXER_SPECIAL :
                     if(isset($data['match']) && $data['match'] == self::TODO_UNCHECK_ALL) {
-                        $renderer->doc .= '<button type="button" class="todouncheckall">Uncheck all todos</button>';
+                        $renderer->doc .= '<button type="button" class="todouncheckall">' . $this->getLang('uncheckall_todos') . '</button>';
                     }
                     return true;
             }

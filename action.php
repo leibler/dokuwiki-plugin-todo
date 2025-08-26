@@ -171,7 +171,7 @@ class action_plugin_todo extends DokuWiki_Action_Plugin {
                 $newWikitext = preg_replace('/(<todo.*?)(\s+#[^>\s]*)(.*?>|\s.*?<\/todo>)/', '$1$3', $wikitext);
 
                 lock($ID);
-                saveWikiText($ID, $newWikitext, 'Unchecked all ToDos', $minoredit = true);
+                saveWikiText($ID, $newWikitext, $this->getLang('uncheckall_todos'), $minoredit = true);
                 unlock($ID);
 
                 $return = array(
