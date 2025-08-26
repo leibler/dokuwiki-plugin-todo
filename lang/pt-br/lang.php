@@ -11,5 +11,6 @@ $lang['qb_todobutton'] = 'Marcar texto como tarefa';
 $lang['refreshpage'] = 'Uma nova versão desta página está disponível. Atualize a página antes de tentar novamente.';
 $lang['checkboxchange_on'] = 'Tarefa marcada';
 $lang['checkboxchange_off'] = 'Tarefa desmarcada';
+$lang['uncheckall_todos'] = 'Desmarcar todas as tarefas';
 
 //Setup VIM: ex: et ts=2 enc=utf-8 :
