@@ -2,7 +2,7 @@
 
 /**
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
- * 
+ *
  * @author Schplurtz le Déboulonné <schplurtz@laposte.net>
  */
 $lang['AllowLinks']            = 'Autoriser les tâches à pointer également vers des pages de même nom.';
