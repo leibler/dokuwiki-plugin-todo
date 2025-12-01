@@ -9,4 +9,4 @@ $lang['qb_todobutton']         = 'Marquer le texte comme tâche.';
 $lang['refreshpage']           = 'Une nouvelle révision de cette page est disponible. Veuillez rafraîchir la page avant d\'essayer à nouveau.';
 $lang['checkboxchange_on']     = 'tâche cochée';
 $lang['checkboxchange_off']    = 'tâche décochée';
-$lang['uncheckall_todos']      = 'dé-cocher toutes les tâches';
+$lang['uncheckall_todos']      = 'Décocher toutes les tâches';
