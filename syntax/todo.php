@@ -77,10 +77,10 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
      * @param $pos      int     The character position of the matched text.
      * @param $handler Doku_Handler  Reference to the Doku_Handler object.
      * @return array  An empty array for most cases, except:
-                        - DOKU_LEXER_EXIT:  An array containing the current lexer state
-                                            and information about the just lexed todo. 
-                        - DOKU_LEXER_SPECIAL:   For the special pattern of the Uncheck-All-Button, an
-                                                array containing the current lexer state and the matched text.
+     *                        - DOKU_LEXER_EXIT:  An array containing the current lexer state
+     *                                            and information about the just lexed todo.
+     *                        - DOKU_LEXER_SPECIAL:   For the special pattern of the Uncheck-All-Button, an
+     *                                                array containing the current lexer state and the matched text.
      */
     public function handle($match, $state, $pos, Doku_Handler $handler) {
         switch($state) {
@@ -190,7 +190,7 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                 @list($completeduser, $completeddate) = explode(':', $option, 2);
                 $data['completeduser'] = substr($completeduser, 1);
                 if(date('Y-m-d', strtotime($completeddate)) == $completeddate) {
-                    $data['completeddate'] = new DateTime($completeddate);
+                    $data['completeddate'] = $completeddate;
                 }
             }
             elseif($option[0] == '!') {
@@ -213,12 +213,12 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
                         break;
                     case 'start':
                         if(date('Y-m-d', strtotime($value)) == $value) {
-                            $data['start'] = new DateTime($value);
+                            $data['start'] = $value;
                         }
                         break;
                     case 'due':
                         if(date('Y-m-d', strtotime($value)) == $value) {
-                            $data['due'] = new DateTime($value);
+                            $data['due'] = $value;
                         }
                         break;
                     case 'showdate':
@@ -272,22 +272,31 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         }
         if(isset($data['completeduser']) && ($checkeduser=$this->_prepUsername($data['completeduser'],$data['username']))!='') {
             $return .= '<span class="todouser">[' . hsc('✓ '.$checkeduser);
-            if(isset($data['completeddate'])) { $return .= ', '.$data['completeddate']->format('Y-m-d'); }
+            if(isset($data['completeddate'])) { 
+                $return .= ', ' . $this->_formatDate($data['completeddate']); 
+            }
             $return .= ']</span>';
         }
 
         // start/due date
         unset($bg);
         $now = new DateTime("now");
-        if(!$checked && (isset($data['start']) || isset($data['due'])) && (!isset($data['start']) || $data['start']<$now) && (!isset($data['due']) || $now<$data['due'])) $bg='todostarted';
-        if(!$checked && isset($data['due']) && $now>=$data['due']) $bg='tododue';
+        $dtStart = isset($data['start']) ? $this->_parseDate($data['start']) : null;
+        $dtDue   = isset($data['due'])   ? $this->_parseDate($data['due'])   : null;
+
+        if(!$checked && ($dtStart || $dtDue) && (!$dtStart || $dtStart < $now) && (!$dtDue || $now < $dtDue)) {
+            $bg = 'todostarted';
+        }
+        if(!$checked && $dtDue && $now >= $dtDue) {
+            $bg = 'tododue';
+        }
 
         // show start/due date
-        if($data['showdate'] == 1 && (isset($data['start']) || isset($data['due']))) {
+        if($data['showdate'] == 1 && ($dtStart || $dtDue)) {
             $return .= '<span class="tododates">[';
-            if(isset($data['start'])) { $return .= $data['start']->format('Y-m-d'); }
+            if($dtStart) { $return .= $dtStart->format('Y-m-d'); }
             $return .= ' → ';
-            if(isset($data['due'])) { $return .= $data['due']->format('Y-m-d'); }
+            if($dtDue) { $return .= $dtDue->format('Y-m-d'); }
             $return .= ']</span>';
         }
 
@@ -331,6 +340,37 @@ class syntax_plugin_todo_todo extends DokuWiki_Syntax_Plugin {
         //restore page ID
         $ID = $oldID;
         return $return;
+    }
+
+    /**
+     * Safely format a date variable (whether string or DateTime instance)
+     */
+    private function _formatDate($dateVal, $format = 'Y-m-d') {
+        if ($dateVal instanceof DateTime) {
+            return $dateVal->format($format);
+        }
+        if (is_string($dateVal)) {
+            $dt = $this->_parseDate($dateVal);
+            return $dt ? $dt->format($format) : $dateVal;
+        }
+        return '';
+    }
+
+    /**
+     * Convert string date input into DateTime object safely
+     */
+    private function _parseDate($dateVal) {
+        if ($dateVal instanceof DateTime) {
+            return $dateVal;
+        }
+        if (is_string($dateVal) && !empty($dateVal)) {
+            try {
+                return new DateTime($dateVal);
+            } catch (Exception $e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**

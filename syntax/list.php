@@ -436,10 +436,11 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
             $condition3s = true; $condition3d = true;
             if(isset($data['startbefore']) || isset($data['startafter']) || isset($data['startat'])) {
                 if(isset($data['start'])) {
+                    $startObj = ($data['start'] instanceof DateTime) ? $data['start'] : new DateTime($data['start']);
                     if($data['startignore'] != '*') { //date comparison is needed unless we don't care -> '*'
-                        if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $data['start']; }
-                        if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $data['start']; }
-                        if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $data['start']; }
+                        if(isset($data['startbefore'])) { $condition3s = $condition3s && new DateTime($data['startbefore']) > $startObj; }
+                        if(isset($data['startafter'])) { $condition3s = $condition3s && new DateTime($data['startafter']) < $startObj; }
+                        if(isset($data['startat'])) { $condition3s = $condition3s && new DateTime($data['startat']) == $startObj; }
                     }
                 } elseif($data['startignore'] != '!') { //start date not set and we're not looking for todos without start date.
                     $condition3s = false;
@@ -448,13 +449,14 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
             if(isset($data['duebefore']) || isset($data['dueafter']) || isset($data['dueat'])) {
                 if(isset($data['due'])) {
+                    $dueObj = ($data['due'] instanceof DateTime) ? $data['due'] : new DateTime($data['due']);
                     if($data['dueignore'] != '*') { //date comparison is needed unless we don't care -> '*'
-                        if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $data['due']; }
-                        if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $data['due']; }
-                        if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $data['due']; }
+                        if(isset($data['duebefore'])) { $condition3d = $condition3d && new DateTime($data['duebefore']) > $dueObj; }
+                        if(isset($data['dueafter'])) { $condition3d = $condition3d && new DateTime($data['dueafter']) < $dueObj; }
+                        if(isset($data['dueat'])) { $condition3d = $condition3d && new DateTime($data['dueat']) == $dueObj; }
                     }
                 } elseif($data['dueignore'] != '!') { //due date not set and we're not looking for todos without due date.
-                    $condition3d = false; 
+                    $condition3d = false;
                 }
             }
             $condition3 = $condition3s && $condition3d;
@@ -462,14 +464,17 @@ class syntax_plugin_todo_list extends syntax_plugin_todo_todo {
 
         // compare completed date
         $condition4 = true;
-        if(isset($data['completedbefore'])) {
-            $condition4 = $condition4 && new DateTime($data['completedbefore']) > $data['completeddate'];
-        }
-        if(isset($data['completedafter'])) {
-            $condition4 = $condition4 && new DateTime($data['completedafter']) < $data['completeddate'];
-        }
-        if(isset($data['completedat'])) {
-            $condition4 = $condition4 && new DateTime($data['completedat']) == $data['completeddate'];
+        if(isset($data['completeddate'])) {
+            $completedObj = ($data['completeddate'] instanceof DateTime) ? $data['completeddate'] : new DateTime($data['completeddate']);
+            if(isset($data['completedbefore'])) {
+                $condition4 = $condition4 && new DateTime($data['completedbefore']) > $completedObj;
+            }
+            if(isset($data['completedafter'])) {
+                $condition4 = $condition4 && new DateTime($data['completedafter']) < $completedObj;
+            }
+            if(isset($data['completedat'])) {
+                $condition4 = $condition4 && new DateTime($data['completedat']) == $completedObj;
+            }
         }
 
         return $condition1 AND $condition2 AND $condition3 AND $condition4;
